@@ -1,9 +1,12 @@
-// src/pages/AdminUsuarios.jsx
+// Archivo: src/pages/AdminUsuarios.jsx
 
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Pencil, Trash2, LogOut, ArrowLeft, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { isAuthenticated, getRol, logout } from "../utils/auth";
+
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -14,18 +17,28 @@ export default function AdminUsuarios() {
   });
 
   const navigate = useNavigate();
-  const rol = localStorage.getItem("rol");
+  const rol = getRol();
 
   useEffect(() => {
-    cargarUsuarios();
+    if (!isAuthenticated()) {
+      navigate("/login");
+    } else {
+      cargarUsuarios();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cargarUsuarios = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/usuarios");
+      const token = sessionStorage.getItem("token");
+      const res = await axios.get(`${BASE_URL}/usuarios`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setUsuarios(res.data);
     } catch (error) {
-      console.error("Error al cargar usuarios:", error);
+      console.error("❌ Error al cargar usuarios:", error);
     }
   };
 
@@ -39,22 +52,32 @@ export default function AdminUsuarios() {
 
   const handleGuardar = async () => {
     try {
-      await axios.put(`http://localhost:4000/usuarios/${editando}`, form);
+      const token = sessionStorage.getItem("token");
+      await axios.put(`${BASE_URL}/usuarios/${editando}`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setEditando(null);
       setForm({ rol: "", activo: true });
       cargarUsuarios();
     } catch (error) {
-      console.error("Error al guardar usuario:", error);
+      console.error("❌ Error al guardar usuario:", error);
     }
   };
 
   const handleEliminar = async (id) => {
     if (confirm("¿Seguro que quieres eliminar este usuario?")) {
       try {
-        await axios.delete(`http://localhost:4000/usuarios/${id}`);
+        const token = sessionStorage.getItem("token");
+        await axios.delete(`${BASE_URL}/usuarios/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         cargarUsuarios();
       } catch (error) {
-        console.error("Error al eliminar usuario:", error);
+        console.error("❌ Error al eliminar usuario:", error);
       }
     }
   };
@@ -64,9 +87,7 @@ export default function AdminUsuarios() {
   };
 
   const handleCerrarSesion = () => {
-    localStorage.removeItem("adminLogueado");
-    localStorage.removeItem("rol");
-    localStorage.removeItem("token");
+    logout();
     navigate("/login");
   };
 

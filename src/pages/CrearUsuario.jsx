@@ -1,8 +1,11 @@
-// src/pages/CrearUsuario.jsx
+// Archivo: src/pages/CrearUsuario.jsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from 'lucide-react';
+import { isAuthenticated, getRol } from '../utils/auth';
+
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function CrearUsuario() {
   const [form, setForm] = useState({
@@ -18,9 +21,14 @@ export default function CrearUsuario() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Obtenemos el rol actual del usuario (para decidir si mostrar el botón)
-  const rol = localStorage.getItem('rol');
-  const mostrarAtras = rol === "admin" || rol === "recepcion";
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  const rol = getRol();
+  const mostrarAtras = rol === 'admin' || rol === 'recepcion';
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -32,7 +40,7 @@ export default function CrearUsuario() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:4000/register', {
+      const res = await fetch(`${BASE_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -41,7 +49,7 @@ export default function CrearUsuario() {
       const data = await res.json();
 
       if (res.ok) {
-        setMensaje('Usuario creado con éxito');
+        setMensaje('✅ Usuario creado con éxito');
         setForm({
           usuario: '',
           contrasena: '',
@@ -51,21 +59,20 @@ export default function CrearUsuario() {
           apellido: '',
         });
       } else {
-        setError(data.error || 'Error al crear usuario');
+        setError(data.error || '❌ Error al crear usuario');
       }
     } catch (err) {
-      setError('Error al conectar con el servidor');
+      console.error('Error de conexión:', err);
+      setError('❌ Error al conectar con el servidor');
     }
   };
 
-  // Botón ATRÁS: solo para admin y recepcion, navega según el rol
   const handleAtras = () => {
     if (rol === 'admin') {
       navigate('/admin/usuarios');
     } else if (rol === 'recepcion') {
       navigate('/admin/panel');
     }
-    // Si no es ninguno, no hay botón, así que no pasa nada.
   };
 
   return (
@@ -79,7 +86,7 @@ export default function CrearUsuario() {
             <ArrowLeft size={18} /> Atrás
           </button>
         )}
-        <h2 className={`text-2xl font-bold text-totalcar-azul ${mostrarAtras ? "ml-4" : ""}`}>
+        <h2 className={`text-2xl font-bold text-totalcar-azul ${mostrarAtras ? 'ml-4' : ''}`}>
           Registrar nuevo usuario
         </h2>
       </div>
@@ -143,8 +150,8 @@ export default function CrearUsuario() {
         >
           Crear usuario
         </button>
-        {mensaje && <p className="text-green-600">{mensaje}</p>}
-        {error && <p className="text-red-600">{error}</p>}
+        {mensaje && <p className="text-green-600 font-semibold">{mensaje}</p>}
+        {error && <p className="text-red-600 font-semibold">{error}</p>}
       </form>
     </section>
   );

@@ -1,7 +1,8 @@
 // Archivo: src/pages/AdminLogin.jsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { isAuthenticated, getRol } from '../utils/auth';
 
 export default function AdminLogin() {
   const [usuario, setUsuario] = useState('');
@@ -9,68 +10,93 @@ export default function AdminLogin() {
   const [mensaje, setMensaje] = useState('');
   const navigate = useNavigate();
 
+  // Redirección automática si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const rol = getRol();
+      if (rol === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (rol === 'recepcion') {
+        navigate('/admin/clientes', { replace: true });
+      }
+    }
+    // eslint-disable-next-line
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje('');
 
     try {
-      const res = await fetch('http://localhost:4000/login', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ usuario, contrasena }),
       });
 
       const data = await res.json();
-      console.log('DATA DEL LOGIN:', data);
 
       if (res.ok) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('rol', data.rol);
-        localStorage.setItem('adminLogueado', JSON.stringify(data));
+        const { token, rol } = data;
+        if (token && rol) {
+          sessionStorage.setItem('token', token);
+          sessionStorage.setItem('rol', rol);
+          sessionStorage.setItem('usuario', JSON.stringify(data));
 
-        if (data.rol === 'admin') {
-          navigate('/admin/dashboard'); // 🔁 Ruta real para admin
-        } else if (data.rol === 'recepcion') {
-          navigate('/admin/panel'); // 🔁 Ruta real para recepcion
+          if (rol === 'admin') {
+            navigate('/admin', { replace: true });
+          } else if (rol === 'recepcion') {
+            navigate('/admin/clientes', { replace: true });
+          } else {
+            setMensaje('Rol no autorizado.');
+          }
         } else {
-          setMensaje('Rol no autorizado');
+          setMensaje('Respuesta inválida del servidor.');
         }
       } else {
-        setMensaje(data.error || 'Error al iniciar sesión');
+        setMensaje(data?.error || 'Credenciales inválidas');
       }
     } catch (error) {
-      console.error('Error al intentar login:', error);
       setMensaje('Error de conexión con el servidor');
+      console.error('Error de red:', error);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white shadow-lg rounded-xl">
-      {/* .src/pages/AdminLogin.jsx */}
-      <h2 className="text-2xl font-bold text-center mb-6">Iniciar Sesión</h2>
-      {mensaje && <p className="mb-4 text-red-600 text-center">{mensaje}</p>}
-      <form onSubmit={handleSubmit} className="grid gap-4">
-        <input
-          type="text"
-          placeholder="Usuario"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          className="border rounded p-2 w-full"
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={contrasena}
-          onChange={(e) => setContrasena(e.target.value)}
-          className="border rounded p-2 w-full"
-        />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-        >
-          Iniciar sesión
-        </button>
-      </form>
+    <div className="bg-gray-100 min-h-screen px-4 py-10">
+      <div className="bg-white p-8 rounded shadow-md w-full max-w-md mx-auto mt-20">
+        <h1 className="text-2xl font-bold mb-6 text-center">Acceso Administrativo</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            name="usuario"
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+            placeholder="Usuario"
+            className="w-full border border-gray-300 p-2 rounded"
+            autoFocus
+            required
+          />
+          <input
+            type="password"
+            name="contrasena"
+            value={contrasena}
+            onChange={(e) => setContrasena(e.target.value)}
+            placeholder="Contraseña"
+            className="w-full border border-gray-300 p-2 rounded"
+            required
+          />
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          >
+            Iniciar sesión
+          </button>
+        </form>
+        {mensaje && (
+          <div className="mt-4 text-center text-red-600 font-semibold">{mensaje}</div>
+        )}
+      </div>
     </div>
   );
 }

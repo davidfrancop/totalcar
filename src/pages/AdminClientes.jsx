@@ -1,9 +1,13 @@
-// src/pages/AdminClientes.jsx
+// Archivo: src/pages/AdminClientes.jsx
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Pencil, Trash2, LogOut, UserPlus, ArrowLeft } from "lucide-react";
+import { Pencil, Trash2, LogOut, UserPlus, ArrowLeft, Car, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { isAuthenticated, getRol, logout } from "../utils/auth";
+
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+console.log("BASE_URL:", BASE_URL);
 
 export default function AdminClientes() {
   const [clientes, setClientes] = useState([]);
@@ -15,37 +19,48 @@ export default function AdminClientes() {
     telefono_movil: "",
     activo: true,
   });
-
+  const [cargando, setCargando] = useState(false);
+  const [mensaje, setMensaje] = useState("");
   const navigate = useNavigate();
-  const rol = localStorage.getItem("rol");
+  const rol = getRol();
 
   useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
     cargarClientes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cargarClientes = async () => {
+    setCargando(true);
     try {
-      const res = await axios.get("http://localhost:4000/clientes");
+      const res = await axios.get(`${BASE_URL}/clientes-autos`);
       setClientes(res.data);
     } catch (error) {
       console.error("Error al cargar clientes:", error);
+      setMensaje("❌ Error al cargar clientes");
+    } finally {
+      setCargando(false);
     }
   };
 
   const handleEditar = (cliente) => {
     setEditando(cliente.id_cliente);
     setForm({
-      nombre: cliente.nombre,
-      apellido: cliente.apellido,
-      email: cliente.email,
+      nombre: cliente.nombre || "",
+      apellido: cliente.apellido || "",
+      email: cliente.email || "",
       telefono_movil: cliente.telefono_movil || "",
       activo: cliente.estado === "activo" || cliente.activo,
     });
+    setMensaje("");
   };
 
   const handleGuardar = async () => {
     try {
-      await axios.put(`http://localhost:4000/clientes/${editando}`, form);
+      await axios.put(`${BASE_URL}/clientes/${editando}`, form);
       setEditando(null);
       setForm({
         nombre: "",
@@ -54,19 +69,23 @@ export default function AdminClientes() {
         telefono_movil: "",
         activo: true,
       });
+      setMensaje("✅ Cliente actualizado");
       cargarClientes();
     } catch (error) {
       console.error("Error al guardar cliente:", error);
+      setMensaje("❌ Error al guardar cambios");
     }
   };
 
   const handleEliminar = async (id) => {
-    if (confirm("¿Seguro que quieres eliminar este cliente?")) {
+    if (window.confirm("¿Seguro que quieres eliminar este cliente?")) {
       try {
-        await axios.delete(`http://localhost:4000/clientes/${id}`);
+        await axios.delete(`${BASE_URL}/clientes/${id}`);
         cargarClientes();
+        setMensaje("✅ Cliente eliminado");
       } catch (error) {
         console.error("Error al eliminar cliente:", error);
+        setMensaje("❌ Error al eliminar cliente");
       }
     }
   };
@@ -76,14 +95,16 @@ export default function AdminClientes() {
   };
 
   const handleCerrarSesion = () => {
-    localStorage.removeItem("adminLogueado");
-    localStorage.removeItem("rol");
-    localStorage.removeItem("token");
+    logout();
     navigate("/login");
   };
 
   const handleAtras = () => {
     navigate("/admin");
+  };
+
+  const handleVerCliente = (id) => {
+    navigate(`/admin/clientes/${id}/editar`);
   };
 
   return (
@@ -117,48 +138,76 @@ export default function AdminClientes() {
       </div>
 
       <h1 className="text-2xl font-bold mb-4">Gestión de Clientes</h1>
+      {mensaje && (
+        <div
+          className={`mb-4 px-4 py-2 rounded ${
+            mensaje.startsWith("✅")
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {mensaje}
+        </div>
+      )}
 
-      <table className="w-full border border-gray-300 rounded shadow text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-2 text-left">ID</th>
-            <th className="p-2 text-left">Nombre</th>
-            <th className="p-2 text-left">Apellido</th>
-            <th className="p-2 text-left">Email</th>
-            <th className="p-2 text-left">Teléfono</th>
-            <th className="p-2 text-left">Activo</th>
-            <th className="p-2 text-left">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clientes.map((cliente) => (
-            <tr key={cliente.id_cliente} className="border-t">
-              <td className="p-2">{cliente.id_cliente}</td>
-              <td className="p-2">{cliente.nombre}</td>
-              <td className="p-2">{cliente.apellido}</td>
-              <td className="p-2">{cliente.email}</td>
-              <td className="p-2">{cliente.telefono_movil || "-"}</td>
-              <td className="p-2">
-                {cliente.activo || cliente.estado === "activo" ? "Sí" : "No"}
-              </td>
-              <td className="p-2 flex gap-2">
-                <button
-                  className="text-blue-600 hover:text-blue-800"
-                  onClick={() => handleEditar(cliente)}
-                >
-                  <Pencil size={18} />
-                </button>
-                <button
-                  className="text-red-600 hover:text-red-800"
-                  onClick={() => handleEliminar(cliente.id_cliente)}
-                >
-                  <Trash2 size={18} />
-                </button>
-              </td>
+      {cargando ? (
+        <div className="text-center py-12 text-lg text-gray-600">Cargando clientes...</div>
+      ) : (
+        <table className="w-full border border-gray-300 rounded shadow text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-2 text-left">ID</th>
+              <th className="p-2 text-left">Nombre</th>
+              <th className="p-2 text-left">Apellido</th>
+              <th className="p-2 text-left">Email</th>
+              <th className="p-2 text-left">Teléfono</th>
+              <th className="p-2 text-center flex items-center gap-1">
+                <Car size={16} /> Autos
+              </th>
+              <th className="p-2 text-left">Activo</th>
+              <th className="p-2 text-left">Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {clientes.map((cliente) => (
+              <tr key={cliente.id_cliente} className="border-t">
+                <td className="p-2">{cliente.id_cliente}</td>
+                <td className="p-2">{cliente.nombre}</td>
+                <td className="p-2">{cliente.apellido}</td>
+                <td className="p-2">{cliente.email}</td>
+                <td className="p-2">{cliente.telefono_movil || "-"}</td>
+                <td className="p-2 text-center">{cliente.cantidad_autos || 0}</td>
+                <td className="p-2">
+                  {cliente.activo || cliente.estado === "activo" ? "Sí" : "No"}
+                </td>
+                <td className="p-2 flex gap-2">
+                  <button
+                    className="text-blue-600 hover:text-blue-800"
+                    onClick={() => handleVerCliente(cliente.id_cliente)}
+                    title="Ver y editar cliente y autos"
+                  >
+                    <Eye size={18} />
+                  </button>
+                  <button
+                    className="text-blue-600 hover:text-blue-800"
+                    onClick={() => handleEditar(cliente)}
+                    title="Edición rápida"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
+                    className="text-red-600 hover:text-red-800"
+                    onClick={() => handleEliminar(cliente.id_cliente)}
+                    title="Eliminar"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {editando && (
         <div className="mt-6 border-t pt-4 bg-gray-50 rounded-lg shadow-lg p-4">

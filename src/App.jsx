@@ -17,17 +17,29 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminClientes from './pages/AdminClientes';
 import AdminUsuarios from './pages/AdminUsuarios';
 import CrearUsuario from './pages/CrearUsuario';
-import CrearCliente from './pages/CrearClienteVehiculo'; // Ya renombrado correctamente
+import CrearClienteVehiculo from './pages/CrearClienteVehiculo';
+import EditarClienteVehiculos from './pages/EditarClienteVehiculos';
+
+// Componente de protección de rutas
+import RutaProtegida from './components/RutaProtegida';
+
+// Página 404 sencilla
+function PaginaNoEncontrada() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+      <h2 className="text-3xl font-bold mb-2">404</h2>
+      <p className="text-lg text-gray-500">Página no encontrada</p>
+    </div>
+  );
+}
 
 export default function App() {
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
 
-      {/* Espacio para compensar el header fijo */}
-      <main className="pt-24">
+      <main className="pt-24 flex-1">
         <Routes>
-
           {/* Rutas públicas */}
           <Route path="/" element={<Inicio />} />
           <Route path="/promociones" element={<Promociones />} />
@@ -35,23 +47,70 @@ export default function App() {
           <Route path="/servicios" element={<Servicios />} />
           <Route path="/contacto" element={<Contacto />} />
 
-          {/* Login acceso */}
+          {/* Login Admin */}
           <Route path="/login" element={<AdminLogin />} />
 
-          {/* Redirección: /admin va a /admin/dashboard */}
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
+          {/* Redirección opcional /admin → /admin/dashboard */}
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
-          {/* Rutas admin */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/clientes" element={<AdminClientes />} />
-          <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-          <Route path="/admin/crear-usuario" element={<CrearUsuario />} />
-          <Route path="/admin/crear-cliente" element={<CrearCliente />} />
+          {/* Rutas exclusivas para admin */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <RutaProtegida rolPermitido="admin">
+                <AdminDashboard />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/admin/usuarios"
+            element={
+              <RutaProtegida rolPermitido="admin">
+                <AdminUsuarios />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/admin/crear-usuario"
+            element={
+              <RutaProtegida rolPermitido="admin">
+                <CrearUsuario />
+              </RutaProtegida>
+            }
+          />
 
+          {/* Rutas para recepcion y admin */}
+          <Route
+            path="/admin/clientes"
+            element={
+              <RutaProtegida rolPermitido="recepcion">
+                <AdminClientes />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/admin/crear-cliente"
+            element={
+              <RutaProtegida rolPermitido="recepcion">
+                <CrearClienteVehiculo />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/admin/clientes/:id/editar"
+            element={
+              <RutaProtegida rolPermitido="recepcion">
+                <EditarClienteVehiculos />
+              </RutaProtegida>
+            }
+          />
+
+          {/* Catch-all: Página no encontrada */}
+          <Route path="*" element={<PaginaNoEncontrada />} />
         </Routes>
       </main>
 
       <Footer />
-    </>
+    </div>
   );
 }
