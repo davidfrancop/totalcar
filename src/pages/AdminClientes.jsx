@@ -2,25 +2,13 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Pencil, Trash2, LogOut, UserPlus, ArrowLeft, Car, Eye } from "lucide-react";
+import { Pencil, Trash2, LogOut, UserPlus, ArrowLeft, Car } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated, getRol, logout } from "../utils/auth";
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL;
-console.log("BASE_URL:", BASE_URL);
-
 export default function AdminClientes() {
   const [clientes, setClientes] = useState([]);
-  const [editando, setEditando] = useState(null);
-  const [form, setForm] = useState({
-    nombre: "",
-    apellido: "",
-    email: "",
-    telefono_movil: "",
-    activo: true,
-  });
-  const [cargando, setCargando] = useState(false);
-  const [mensaje, setMensaje] = useState("");
+  const [busqueda, setBusqueda] = useState("");
   const navigate = useNavigate();
   const rol = getRol();
 
@@ -30,238 +18,114 @@ export default function AdminClientes() {
       return;
     }
     cargarClientes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, []);
 
   const cargarClientes = async () => {
-    setCargando(true);
     try {
-      const res = await axios.get(`${BASE_URL}/clientes-autos`);
+      const res = await axios.get("http://localhost:4000/clientes-autos");
       setClientes(res.data);
     } catch (error) {
       console.error("Error al cargar clientes:", error);
-      setMensaje("❌ Error al cargar clientes");
-    } finally {
-      setCargando(false);
     }
   };
 
-  const handleEditar = (cliente) => {
-    setEditando(cliente.id_cliente);
-    setForm({
-      nombre: cliente.nombre || "",
-      apellido: cliente.apellido || "",
-      email: cliente.email || "",
-      telefono_movil: cliente.telefono_movil || "",
-      activo: cliente.estado === "activo" || cliente.activo,
-    });
-    setMensaje("");
+  const clientesFiltrados = clientes.filter((c) =>
+    `${c.nombre} ${c.apellido}`.toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const handleVolver = () => {
+    navigate("/admin/dashboard");
   };
 
-  const handleGuardar = async () => {
-    try {
-      await axios.put(`${BASE_URL}/clientes/${editando}`, form);
-      setEditando(null);
-      setForm({
-        nombre: "",
-        apellido: "",
-        email: "",
-        telefono_movil: "",
-        activo: true,
-      });
-      setMensaje("✅ Cliente actualizado");
-      cargarClientes();
-    } catch (error) {
-      console.error("Error al guardar cliente:", error);
-      setMensaje("❌ Error al guardar cambios");
-    }
-  };
-
-  const handleEliminar = async (id) => {
-    if (window.confirm("¿Seguro que quieres eliminar este cliente?")) {
-      try {
-        await axios.delete(`${BASE_URL}/clientes/${id}`);
-        cargarClientes();
-        setMensaje("✅ Cliente eliminado");
-      } catch (error) {
-        console.error("Error al eliminar cliente:", error);
-        setMensaje("❌ Error al eliminar cliente");
-      }
-    }
-  };
-
-  const handleNuevoCliente = () => {
-    navigate("/admin/crear-cliente");
-  };
-
-  const handleCerrarSesion = () => {
+  const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const handleAtras = () => {
-    navigate("/admin");
-  };
-
-  const handleVerCliente = (id) => {
-    navigate(`/admin/clientes/${id}/editar`);
-  };
-
   return (
-    <div className="p-4 max-w-6xl mx-auto">
-      {/* Botón Atrás (solo para admin) */}
-      {rol === "admin" && (
-        <button
-          onClick={handleAtras}
-          className="mb-4 flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
-        >
-          <ArrowLeft size={18} /> Volver al Panel
-        </button>
-      )}
-
-      {/* Barra de botones */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2">
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Listado de Clientes</h1>
+        <div className="flex gap-4">
+          {rol === "admin" && (
+            <button
+              onClick={handleVolver}
+              className="flex items-center gap-1 text-blue-600 hover:underline"
+            >
+              <ArrowLeft size={18} /> Volver
+            </button>
+          )}
           <button
-            onClick={handleNuevoCliente}
-            className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-red-600 hover:underline"
           >
-            <UserPlus size={18} /> Nuevo Cliente
+            <LogOut size={18} /> Cerrar sesión
           </button>
         </div>
+      </div>
+
+      <div className="flex justify-between items-center mb-4">
+        <input
+          type="text"
+          placeholder="Buscar por nombre o apellido..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="border px-2 py-1 rounded w-full max-w-md"
+        />
         <button
-          onClick={handleCerrarSesion}
-          className="flex items-center gap-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition"
+          onClick={() => navigate("/admin/crear-cliente")}
+          className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 ml-4"
         >
-          <LogOut size={18} /> Cerrar sesión
+          <UserPlus size={16} /> Nuevo cliente
         </button>
       </div>
 
-      <h1 className="text-2xl font-bold mb-4">Gestión de Clientes</h1>
-      {mensaje && (
-        <div
-          className={`mb-4 px-4 py-2 rounded ${
-            mensaje.startsWith("✅")
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {mensaje}
-        </div>
-      )}
-
-      {cargando ? (
-        <div className="text-center py-12 text-lg text-gray-600">Cargando clientes...</div>
-      ) : (
-        <table className="w-full border border-gray-300 rounded shadow text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-2 text-left">ID</th>
-              <th className="p-2 text-left">Nombre</th>
-              <th className="p-2 text-left">Apellido</th>
-              <th className="p-2 text-left">Email</th>
-              <th className="p-2 text-left">Teléfono</th>
-              <th className="p-2 text-center flex items-center gap-1">
-                <Car size={16} /> Autos
-              </th>
-              <th className="p-2 text-left">Activo</th>
-              <th className="p-2 text-left">Acciones</th>
+      <table className="w-full border-collapse border text-sm">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border px-2 py-1">Nombre</th>
+            <th className="border px-2 py-1">Email</th>
+            <th className="border px-2 py-1">Teléfono</th>
+            <th className="border px-2 py-1">Estado</th>
+            <th className="border px-2 py-1">Autos</th>
+            <th className="border px-2 py-1">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {clientesFiltrados.map((cliente) => (
+            <tr key={cliente.id_cliente} className="hover:bg-gray-100">
+              <td className="border px-2 py-1">
+                {cliente.nombre} {cliente.apellido}
+              </td>
+              <td className="border px-2 py-1">{cliente.email}</td>
+              <td className="border px-2 py-1">{cliente.telefono_movil}</td>
+              <td className="border px-2 py-1">
+                {cliente.activo ? "Activo" : "Inactivo"}
+              </td>
+              <td className="border px-2 py-1">{cliente.cantidad_autos}</td>
+              <td className="border px-2 py-1 space-x-2">
+                <button
+                  onClick={() =>
+                    navigate(`/admin/clientes/${cliente.id_cliente}/editar`)
+                  }
+                  className="text-blue-600 hover:underline"
+                >
+                  <Pencil size={16} />
+                </button>
+                <button
+                  onClick={() =>
+                    navigate(`/admin/clientes/${cliente.id_cliente}/editar`)
+                  }
+                  className="text-green-600 hover:underline"
+                >
+                  <Car size={16} />
+                </button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {clientes.map((cliente) => (
-              <tr key={cliente.id_cliente} className="border-t">
-                <td className="p-2">{cliente.id_cliente}</td>
-                <td className="p-2">{cliente.nombre}</td>
-                <td className="p-2">{cliente.apellido}</td>
-                <td className="p-2">{cliente.email}</td>
-                <td className="p-2">{cliente.telefono_movil || "-"}</td>
-                <td className="p-2 text-center">{cliente.cantidad_autos || 0}</td>
-                <td className="p-2">
-                  {cliente.activo || cliente.estado === "activo" ? "Sí" : "No"}
-                </td>
-                <td className="p-2 flex gap-2">
-                  <button
-                    className="text-blue-600 hover:text-blue-800"
-                    onClick={() => handleVerCliente(cliente.id_cliente)}
-                    title="Ver y editar cliente y autos"
-                  >
-                    <Eye size={18} />
-                  </button>
-                  <button
-                    className="text-blue-600 hover:text-blue-800"
-                    onClick={() => handleEditar(cliente)}
-                    title="Edición rápida"
-                  >
-                    <Pencil size={18} />
-                  </button>
-                  <button
-                    className="text-red-600 hover:text-red-800"
-                    onClick={() => handleEliminar(cliente.id_cliente)}
-                    title="Eliminar"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {editando && (
-        <div className="mt-6 border-t pt-4 bg-gray-50 rounded-lg shadow-lg p-4">
-          <h2 className="text-lg font-semibold mb-2">Editar Cliente #{editando}</h2>
-          <div className="flex flex-col gap-3">
-            <input
-              className="border p-2 rounded"
-              placeholder="Nombre"
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-            />
-            <input
-              className="border p-2 rounded"
-              placeholder="Apellido"
-              value={form.apellido}
-              onChange={(e) => setForm({ ...form, apellido: e.target.value })}
-            />
-            <input
-              className="border p-2 rounded"
-              placeholder="Email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <input
-              className="border p-2 rounded"
-              placeholder="Teléfono"
-              value={form.telefono_movil}
-              onChange={(e) => setForm({ ...form, telefono_movil: e.target.value })}
-            />
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.activo}
-                onChange={(e) => setForm({ ...form, activo: e.target.checked })}
-              />
-              Activo
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={handleGuardar}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                Guardar
-              </button>
-              <button
-                onClick={() => setEditando(null)}
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

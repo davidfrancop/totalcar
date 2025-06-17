@@ -85,7 +85,10 @@ app.put("/usuarios/:id", async (req, res) => {
 app.delete("/usuarios/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("DELETE FROM usuarios WHERE id_usuario = $1", [id]);
+    const result = await pool.query(
+      "DELETE FROM usuarios WHERE id_usuario = $1",
+      [id]
+    );
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
@@ -95,9 +98,6 @@ app.delete("/usuarios/:id", async (req, res) => {
     res.status(500).json({ error: "Error al eliminar usuario" });
   }
 });
-
-// ----------- REGISTRAR CLIENTE + VEHÍCULO -----------
-// (ya incluido correctamente en tu código, no se repite aquí)
 
 // -------------------- CLIENTES ----------------------
 // Obtener clientes + cantidad de autos
@@ -110,9 +110,9 @@ app.get("/clientes-autos", async (req, res) => {
               c.estado,
               COUNT(v.id_vehiculo) AS cantidad_autos
          FROM clientes c
-         LEFT JOIN vehiculos v ON v.id_cliente = c.id_cliente
-        GROUP BY c.id_cliente, c.nombre, c.apellido, c.email, c.telefono_movil, c.estado
-        ORDER BY c.id_cliente DESC`
+    LEFT JOIN vehiculos v ON v.id_cliente = c.id_cliente
+     GROUP BY c.id_cliente, c.nombre, c.apellido, c.email, c.telefono_movil, c.estado
+     ORDER BY c.id_cliente DESC`
     );
     console.log("Resultado de clientes-autos:", result.rows.length, "registros.");
     res.json(result.rows);
@@ -122,11 +122,99 @@ app.get("/clientes-autos", async (req, res) => {
   }
 });
 
+// Obtener detalle completo de cliente + sus vehículos
+app.get("/clientes/:id/detalle", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const clienteResult = await pool.query(
+      `SELECT * FROM clientes WHERE id_cliente = $1`,
+      [id]
+    );
+
+    if (clienteResult.rows.length === 0) {
+      return res.status(404).json({ error: "Cliente no encontrado" });
+    }
+
+    const vehiculosResult = await pool.query(
+      `SELECT * FROM vehiculos WHERE id_cliente = $1 ORDER BY id_vehiculo DESC`,
+      [id]
+    );
+
+    res.json({
+      cliente: clienteResult.rows[0],
+      vehiculos: vehiculosResult.rows,
+    });
+  } catch (error) {
+    console.error("Error en GET /clientes/:id/detalle:", error);
+    res.status(500).json({ error: "Error al obtener detalles del cliente" });
+  }
+});
+
+// -------------------- VEHÍCULOS ----------------------
+// Obtener datos completos de un vehículo por ID
+app.get("/vehiculos/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const query = `
+      SELECT v.*, 
+             c.nombre || ' ' || c.apellido AS nombre_cliente
+        FROM vehiculos v
+   LEFT JOIN clientes c ON v.id_cliente = c.id_cliente
+       WHERE v.id_vehiculo = $1
+    `;
+    const result = await pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Vehículo no encontrado" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error en GET /vehiculos/:id:", error);
+    res.status(500).json({ error: "Error al obtener datos del vehículo" });
+  }
+});
+
+// Obtener todos los vehículos
+app.get("/vehiculos", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT v.*, 
+             c.nombre || ' ' || c.apellido AS nombre_cliente
+        FROM vehiculos v
+   LEFT JOIN clientes c ON v.id_cliente = c.id_cliente
+    ORDER BY v.id_vehiculo DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error en GET /vehiculos:", error);
+    res.status(500).json({ error: "Error al obtener la lista de vehículos" });
+  }
+});
+
+// -------------------- DASHBOARD ----------------------
+app.get("/resumen-dashboard", async (req, res) => {
+  try {
+    const totalClientes = await pool.query("SELECT COUNT(*) FROM clientes");
+    const totalVehiculos = await pool.query("SELECT COUNT(*) FROM vehiculos");
+
+    res.json({
+      total_clientes: parseInt(totalClientes.rows[0].count),
+      total_vehiculos: parseInt(totalVehiculos.rows[0].count),
+    });
+  } catch (error) {
+    console.error("Error en GET /resumen-dashboard:", error);
+    res.status(500).json({ error: "Error al obtener resumen del dashboard" });
+  }
+});
+
 // -------------------- TEST ----------------------
 app.get("/", (req, res) => {
   res.send("Backend TotalCar está funcionando 🚗✨");
 });
 
-app.listen(4000, '0.0.0.0', () => {
+// -------------------- INICIAR SERVIDOR ----------------------
+app.listen(4000, "0.0.0.0", () => {
   console.log("Backend TotalCar escuchando en puerto 4000 y en todas las interfaces (0.0.0.0)");
 });

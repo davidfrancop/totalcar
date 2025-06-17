@@ -16,9 +16,11 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminClientes from './pages/AdminClientes';
 import AdminUsuarios from './pages/AdminUsuarios';
+import AdminVehiculos from './pages/AdminVehiculos';
 import CrearUsuario from './pages/CrearUsuario';
 import CrearClienteVehiculo from './pages/CrearClienteVehiculo';
 import EditarClienteVehiculos from './pages/EditarClienteVehiculos';
+import VehiculoDetalle from './pages/VehiculoDetalle';
 
 // Componente de protección de rutas
 import RutaProtegida from './components/RutaProtegida';
@@ -101,6 +103,24 @@ export default function App() {
             element={
               <RutaProtegida rolPermitido="recepcion">
                 <EditarClienteVehiculos />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/admin/vehiculos"
+            element={
+              <RutaProtegida rolPermitido="recepcion">
+                <AdminVehiculos />
+              </RutaProtegida>
+            }
+          />
+
+          {/* Ver ficha de vehículo */}
+          <Route
+            path="/vehiculos/:id"
+            element={
+              <RutaProtegida>
+                <VehiculoDetalle />
               </RutaProtegida>
             }
           />

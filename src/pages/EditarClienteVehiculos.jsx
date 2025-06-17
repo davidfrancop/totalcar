@@ -3,194 +3,171 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Pencil, Trash2, Plus, Check, X } from "lucide-react";
+import { ArrowLeft, Pencil, Eye } from "lucide-react";
 import { isAuthenticated, getRol } from "../utils/auth";
-
-const opcionesEmpresa = [
-  { value: false, label: 'No' },
-  { value: true, label: 'Sí' },
-];
-
-const opcionesEstado = [
-  { value: 'activo', label: 'Activo' },
-  { value: 'inactivo', label: 'Inactivo' },
-];
 
 export default function EditarClienteVehiculos() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [cliente, setCliente] = useState(null);
-  const [form, setForm] = useState({});
   const [vehiculos, setVehiculos] = useState([]);
+  const [form, setForm] = useState({});
   const [mensaje, setMensaje] = useState("");
-  const [editandoAuto, setEditandoAuto] = useState(null);
-  const [autoForm, setAutoForm] = useState({});
-  const [mostrandoNuevoAuto, setMostrandoNuevoAuto] = useState(false);
+  const rol = getRol();
 
   useEffect(() => {
-    if (!isAuthenticated()) navigate("/login");
+    if (!isAuthenticated()) return navigate("/login");
     cargarDetalle();
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cargarDetalle = async () => {
     try {
       const res = await axios.get(`http://localhost:4000/clientes/${id}/detalle`);
-      setCliente(res.data);
-      setVehiculos(res.data.vehiculos || []);
+      setCliente(res.data.cliente);
       setForm({
-        nombre: res.data.nombre || "",
-        apellido: res.data.apellido || "",
-        dni: res.data.dni || "",
-        ciudad: res.data.ciudad || "",
-        pais: res.data.pais || "",
-        email: res.data.email || "",
-        telefono_oficina: res.data.telefono_oficina || "",
-        telefono_casa: res.data.telefono_casa || "",
-        telefono_movil: res.data.telefono_movil || "",
-        fecha_nacimiento: res.data.fecha_nacimiento || "",
-        notas: res.data.notas || "",
-        empresa: res.data.empresa || false,
-        nombre_empresa: res.data.nombre_empresa || "",
-        estado: res.data.estado || "activo",
-        fecha_alta: res.data.fecha_alta || "",
-        calle: res.data.calle || "",
-        nro_casa: res.data.nro_casa || "",
-        codigo_postal: res.data.codigo_postal || "",
+        nombre: res.data.cliente.nombre || "",
+        apellido: res.data.cliente.apellido || "",
+        email: res.data.cliente.email || "",
+        telefono_movil: res.data.cliente.telefono_movil || "",
+        dni: res.data.cliente.dni || "",
+        empresa: res.data.cliente.empresa || "No",
+        nombre_empresa: res.data.cliente.nombre_empresa || "",
       });
-    } catch (err) {
-      setMensaje("❌ Error al cargar cliente");
+      setVehiculos(res.data.vehiculos);
+    } catch (error) {
+      console.error("Error al cargar datos del cliente", error);
     }
   };
 
-  const handleClienteChange = (e) => {
-    const { name, value, type } = e.target;
-    let val = (type === "select-one" && name === "empresa") ? value === "true" : value;
-    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? e.target.checked : val }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGuardarCliente = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMensaje("");
+
     try {
       await axios.put(`http://localhost:4000/clientes/${id}`, form);
-      setMensaje("✅ Cliente actualizado");
-      cargarDetalle();
-    } catch {
-      setMensaje("❌ Error al actualizar cliente");
+      setMensaje("Datos actualizados con éxito");
+    } catch (error) {
+      console.error("Error al actualizar cliente", error);
+      setMensaje("Error al guardar los cambios");
     }
   };
 
-  // --- Vehículos: Lógica igual que antes ---
-
-  const inputClass = "input w-full mb-2 border border-gray-300 p-2 rounded";
-
-  if (!cliente) {
-    return <div className="p-4">Cargando datos...</div>;
-  }
+  if (!cliente) return <p className="p-4">Cargando cliente...</p>;
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white shadow-lg rounded-xl mt-10">
-      {/* .src/pages/EditarClienteVehiculos.jsx */}
-      <button
-        onClick={() => navigate("/admin/clientes")}
-        className="mb-4 flex items-center gap-2 text-blue-600 hover:underline text-sm"
-      >
-        <ArrowLeft size={18} /> Volver a la lista de clientes
-      </button>
-      <h2 className="text-2xl font-bold mb-6">Editar Cliente y Vehículos</h2>
-      {mensaje && <div className="mb-2 text-red-600">{mensaje}</div>}
+    <div className="p-4 max-w-3xl mx-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Editar cliente</h2>
+        {rol === "admin" && (
+          <button
+            onClick={() => navigate("/admin")}
+            className="text-blue-600 hover:underline"
+          >
+            <ArrowLeft size={18} className="inline mr-1" />
+            Volver al panel
+          </button>
+        )}
+      </div>
 
-      {/* DATOS DEL CLIENTE */}
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-2">Datos del Cliente</h3>
-        <form
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          onSubmit={e => {
-            e.preventDefault();
-            handleGuardarCliente();
-          }}
-        >
-          <div><label>Nombre</label>
-            <input className={inputClass} name="nombre" value={form.nombre} onChange={handleClienteChange} required />
-          </div>
-          <div><label>Apellido</label>
-            <input className={inputClass} name="apellido" value={form.apellido} onChange={handleClienteChange} required />
-          </div>
-          <div><label>DNI</label>
-            <input className={inputClass} name="dni" value={form.dni} onChange={handleClienteChange} required />
-          </div>
-          <div><label>Ciudad</label>
-            <input className={inputClass} name="ciudad" value={form.ciudad} onChange={handleClienteChange} />
-          </div>
-          <div><label>País</label>
-            <input className={inputClass} name="pais" value={form.pais} onChange={handleClienteChange} />
-          </div>
-          <div><label>Email</label>
-            <input className={inputClass} name="email" value={form.email} onChange={handleClienteChange} />
-          </div>
-          <div><label>Teléfono oficina</label>
-            <input className={inputClass} name="telefono_oficina" value={form.telefono_oficina} onChange={handleClienteChange} />
-          </div>
-          <div><label>Teléfono casa</label>
-            <input className={inputClass} name="telefono_casa" value={form.telefono_casa} onChange={handleClienteChange} />
-          </div>
-          <div><label>Teléfono móvil</label>
-            <input className={inputClass} name="telefono_movil" value={form.telefono_movil} onChange={handleClienteChange} />
-          </div>
-          <div><label>Fecha nacimiento</label>
-            <input className={inputClass} name="fecha_nacimiento" type="date" value={form.fecha_nacimiento || ""} onChange={handleClienteChange} />
-          </div>
-          <div><label>Notas</label>
-            <input className={inputClass} name="notas" value={form.notas} onChange={handleClienteChange} />
-          </div>
-          <div><label>¿Es empresa?</label>
-            <select className={inputClass} name="empresa" value={form.empresa} onChange={handleClienteChange}>
-              {opcionesEmpresa.map(opt => (
-                <option key={opt.label} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-          {/* Mostrar solo si es empresa */}
-          {String(form.empresa) === "true" && (
-            <div>
-              <label>Nombre empresa</label>
-              <input className={inputClass} name="nombre_empresa" value={form.nombre_empresa} onChange={handleClienteChange} />
-            </div>
+      {mensaje && <div className="text-green-600 mb-2">{mensaje}</div>}
+
+      <form onSubmit={handleSubmit} className="grid gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-4">
+          <input
+            name="nombre"
+            value={form.nombre}
+            onChange={handleChange}
+            placeholder="Nombre"
+            className="border px-2 py-1 rounded"
+          />
+          <input
+            name="apellido"
+            value={form.apellido}
+            onChange={handleChange}
+            placeholder="Apellido"
+            className="border px-2 py-1 rounded"
+          />
+        </div>
+        <input
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="Correo electrónico"
+          className="border px-2 py-1 rounded"
+        />
+        <input
+          name="telefono_movil"
+          value={form.telefono_movil}
+          onChange={handleChange}
+          placeholder="Teléfono móvil"
+          className="border px-2 py-1 rounded"
+        />
+        <input
+          name="dni"
+          value={form.dni}
+          onChange={handleChange}
+          placeholder="DNI"
+          className="border px-2 py-1 rounded"
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <select
+            name="empresa"
+            value={form.empresa}
+            onChange={handleChange}
+            className="border px-2 py-1 rounded"
+          >
+            <option value="No">Particular</option>
+            <option value="Sí">Empresa</option>
+          </select>
+          {form.empresa === "Sí" && (
+            <input
+              name="nombre_empresa"
+              value={form.nombre_empresa}
+              onChange={handleChange}
+              placeholder="Nombre de la empresa"
+              className="border px-2 py-1 rounded"
+            />
           )}
-          <div><label>Estado</label>
-            <select className={inputClass} name="estado" value={form.estado} onChange={handleClienteChange}>
-              {opcionesEstado.map(opt => (
-                <option key={opt.label} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-          <div><label>Fecha de alta</label>
-            <input className={inputClass} name="fecha_alta" type="date" value={form.fecha_alta || ""} onChange={handleClienteChange} />
-          </div>
-          <div><label>Calle</label>
-            <input className={inputClass} name="calle" value={form.calle} onChange={handleClienteChange} />
-          </div>
-          <div><label>Nro casa</label>
-            <input className={inputClass} name="nro_casa" value={form.nro_casa} onChange={handleClienteChange} />
-          </div>
-          <div><label>Código postal</label>
-            <input className={inputClass} name="codigo_postal" value={form.codigo_postal} onChange={handleClienteChange} />
-          </div>
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              className="mt-2 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-            >
-              Guardar Cliente
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
 
-      {/* Vehículos: tu lógica habitual aquí (como ya la tienes, puedes dejar los forms igual) */}
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-2">Vehículos del Cliente</h3>
-        {/* ... Aquí va el listado, edición y alta de vehículos ... */}
-      </div>
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Guardar cambios
+        </button>
+      </form>
+
+      <h3 className="text-xl font-semibold mb-2">Vehículos del cliente</h3>
+      <ul className="divide-y">
+        {vehiculos.map((v) => (
+          <li key={v.id_vehiculo} className="py-2 flex justify-between items-center">
+            <div>
+              <strong>{v.marca} {v.modelo}</strong> – {v.matricula} ({v.anio})
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => navigate(`/vehiculos/${v.id_vehiculo}`)}
+                className="text-blue-600 hover:underline text-sm flex items-center"
+              >
+                <Eye className="w-4 h-4 mr-1" /> Ver
+              </button>
+              <button
+                onClick={() => navigate(`/admin/vehiculos/${v.id_vehiculo}/editar`)}
+                className="text-green-600 hover:underline text-sm flex items-center"
+              >
+                <Pencil className="w-4 h-4 mr-1" /> Editar
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
