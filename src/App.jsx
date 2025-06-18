@@ -18,7 +18,7 @@ import AdminClientes from './pages/AdminClientes';
 import AdminUsuarios from './pages/AdminUsuarios';
 import AdminVehiculos from './pages/AdminVehiculos';
 import CrearUsuario from './pages/CrearUsuario';
-import CrearClienteVehiculo from './pages/CrearClienteVehiculo';
+import CrearCliente from './pages/CrearCliente';
 import EditarClienteVehiculos from './pages/EditarClienteVehiculos';
 import VehiculoDetalle from './pages/VehiculoDetalle';
 
@@ -81,7 +81,7 @@ export default function App() {
             }
           />
 
-          {/* Rutas para recepcion y admin */}
+          {/* Rutas para recepción y admin */}
           <Route
             path="/admin/clientes"
             element={
@@ -94,7 +94,7 @@ export default function App() {
             path="/admin/crear-cliente"
             element={
               <RutaProtegida rolPermitido="recepcion">
-                <CrearClienteVehiculo />
+                <CrearCliente />
               </RutaProtegida>
             }
           />

@@ -14,6 +14,7 @@ If you are developing a production application, we recommend using TypeScript wi
 # ESTRUCTURA TOTALCAR
 
 total-car/
+│
 ├── .env                      # Variables de entorno frontend
 ├── .gitignore                # Archivos que Git no debe subir
 ├── index.html                # HTML principal de Vite
@@ -27,13 +28,32 @@ total-car/
 │   ├── index.js              # Punto de entrada del backend (Express)
 │   ├── db/
 │   │   └── setup.js          # Script opcional para crear las tablas (por código)
+│   │
 │   ├── rutas/
 │   │   ├── clientes.js       # Endpoints: GET, POST, PUT de clientes
 │   │   ├── vehiculos.js      # Endpoints de vehículos
 │   │   ├── login.js          # Login con verificación de contraseña
 │   │   └── usuarios.js       # Crear/editar usuarios (admin)
-│   ├── modelos/ (opcional)   # Definiciones SQL o esquemas de tablas
-│   ├── controladores/ (opcional) # Lógica separada de las rutas
+│   │
+│   ├── modelos/              # Definiciones SQL o esquemas de tablas
+│   │   ├── citas.js
+│   │   ├── clientes.js
+│   │   ├── empleados.js
+│   │   ├── empresas.js
+│   │   ├── factura_detalles.js
+│   │   ├── facturas.js
+│   │   ├── historial_servicios.js
+│   │   ├── index.js
+│   │   ├── ordenes_trabajo.js
+│   │   ├── usuarios.js
+│   │   └── vehiculos.js
+│   │
+│   ├── controladores/        # Lógica separada de las rutas
+│   │    ├── clientesController.js     → funciones para registrar y obtener clientes
+│   │    ├── usuariosController.js     → funciones para listar usuarios
+│   │    ├── vehiculosController.js    → funciones para obtener vehículos
+│   │    └── loginController.js        → función para login y generar token
+│   │
 │   ├── package.json          # Configuración del backend (bcrypt, pg, etc.)
 │   └── node_modules/
 │
@@ -48,10 +68,18 @@ total-car/
     ├── App.css               # Estilos globales personalizados
     ├── index.css             # Estilos de Tailwind
     │
+    ├── data/
+    │   ├── clientes.js
+    │   └── usuarios.js
+    │
     ├── assets/               # Logos, imágenes, íconos
+    │
     ├── components/           # Componentes reutilizables
     │   ├── Header.jsx
     │   ├── Footer.jsx
+    │   ├── BannerPromocion.jsx
+    │   ├── Logo.jsx
+    │   ├── ServicioCard.jsx
     │   └── RutaProtegida.jsx # Autenticación por rol
     │
     ├── pages/                # Páginas completas
@@ -61,11 +89,14 @@ total-car/
     │   ├── Nosotros.jsx
     │   ├── Contacto.jsx
     │   ├── AdminLogin.jsx
+    │   ├── AdminDashboard.jsx
     │   ├── AdminClientes.jsx
-    │   ├── EditarClienteVehiculos.jsx
-    │   ├── CrearClienteVehiculo.jsx
+    │   ├── AdminUsuarios.jsx
+    │   ├── AdminVehiculos.jsx
+    │   ├── CrearCliente.jsx
     │   ├── CrearUsuario.jsx
-    │   └── AdminUsuarios.jsx
+    │   ├── EditarClienteVehiculos.jsx
+    │   └── VehiculoDetalle.jsx
     │
     ├── utils/                # Funciones auxiliares
     │   └── auth.js           # Validación de token, roles, logout

@@ -1,87 +1,84 @@
 // Archivo: src/pages/AdminDashboard.jsx
 
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { getRol, isAuthenticated, logout } from "../utils/auth";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { isAuthenticated, getRol, logout } from "../utils/auth";
 import {
-  LogOut,
   Users,
   Car,
-  UserPlus,
-  Settings,
-  LayoutDashboard,
+  ClipboardList,
+  Wrench,
+  LogOut,
 } from "lucide-react";
 
 export default function AdminDashboard() {
-  const [resumen, setResumen] = useState(null);
   const navigate = useNavigate();
   const rol = getRol();
 
   useEffect(() => {
-    if (!isAuthenticated()) return navigate("/login");
-    cargarResumen();
-  }, []);
-
-  const cargarResumen = async () => {
-    try {
-      const res = await axios.get("http://localhost:4000/resumen-dashboard");
-      setResumen(res.data);
-    } catch (error) {
-      console.error("Error al cargar resumen:", error);
+    if (!isAuthenticated() || rol !== "admin") {
+      navigate("/login");
     }
-  };
+  }, [navigate, rol]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const Tarjeta = ({ icono: Icono, texto, ruta }) => (
-    <div
-      onClick={() => navigate(ruta)}
-      className="cursor-pointer bg-white border rounded-xl shadow hover:shadow-md p-6 flex items-center gap-4 transition"
-    >
-      <Icono size={28} className="text-blue-600" />
-      <div className="text-sm font-medium text-gray-800">{texto}</div>
-    </div>
-  );
+  const opciones = [
+    {
+      titulo: "Clientes y Vehículos",
+      icono: <Car className="w-6 h-6 text-gray-700" />,
+      onClick: () => navigate("/admin/clientes"),
+    },
+    {
+      titulo: "Usuarios",
+      icono: <Users className="w-6 h-6 text-gray-700" />,
+      onClick: () => navigate("/admin/usuarios"),
+    },
+    {
+      titulo: "Historial de Servicios",
+      icono: <ClipboardList className="w-6 h-6 text-gray-700" />,
+      onClick: () => navigate("/admin/servicios"),
+    },
+    {
+      titulo: "Tareas del Taller",
+      icono: <Wrench className="w-6 h-6 text-gray-700" />,
+      onClick: () => navigate("/admin/taller"),
+    },
+  ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <LayoutDashboard size={26} />
-          TotalCar – Panel de Administración
+    <div className="min-h-screen bg-gray-100 py-10 px-4">
+      {/* .src/pages/AdminDashboard.jsx */}
+      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow p-8">
+        <h1 className="text-3xl font-bold text-center mb-10 text-gray-800">
+          Centro de Operaciones - TotalCar
         </h1>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-1 text-red-600 hover:underline"
-        >
-          <LogOut size={18} /> Cerrar sesión
-        </button>
-      </div>
 
-      {resumen && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div className="bg-blue-100 text-blue-800 p-4 rounded-xl font-semibold">
-            🚗 Vehículos: {resumen.total_vehiculos}
-          </div>
-          <div className="bg-green-100 text-green-800 p-4 rounded-xl font-semibold">
-            👥 Clientes: {resumen.total_clientes}
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {opciones.map((opcion, i) => (
+            <div
+              key={i}
+              onClick={opcion.onClick}
+              className="cursor-pointer border border-gray-200 rounded-xl p-5 flex items-center gap-4 hover:shadow-md transition"
+            >
+              <div className="bg-gray-100 p-3 rounded-full">{opcion.icono}</div>
+              <span className="text-gray-800 font-medium text-sm">{opcion.titulo}</span>
+            </div>
+          ))}
         </div>
-      )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <Tarjeta icono={Car} texto="Ver vehículos" ruta="/admin/vehiculos" />
-        <Tarjeta icono={Users} texto="Ver clientes" ruta="/admin/clientes" />
-        <Tarjeta icono={UserPlus} texto="Crear cliente" ruta="/admin/crear-cliente" />
-        {rol === "admin" && (
-          <>
-            <Tarjeta icono={Settings} texto="Gestión de usuarios" ruta="/admin/usuarios" />
-          </>
-        )}
+        <div className="mt-10 flex justify-center">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-red-600 transition"
+          >
+            <LogOut className="w-5 h-5" />
+            Cerrar sesión
+          </button>
+        </div>
       </div>
     </div>
   );

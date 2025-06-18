@@ -19,7 +19,12 @@ export default function VehiculoDetalle() {
 
   const cargarVehiculo = async () => {
     try {
-      const res = await axios.get(`http://localhost:4000/vehiculos/${id}`);
+      const token = sessionStorage.getItem("token");
+      const res = await axios.get(`http://localhost:4000/vehiculos/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setVehiculo(res.data);
     } catch (error) {
       console.error("Error al cargar vehículo:", error);

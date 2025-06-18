@@ -23,20 +23,27 @@ export default function EditarClienteVehiculos() {
 
   const cargarDetalle = async () => {
     try {
-      const res = await axios.get(`http://localhost:4000/clientes/${id}/detalle`);
-      setCliente(res.data.cliente);
-      setForm({
-        nombre: res.data.cliente.nombre || "",
-        apellido: res.data.cliente.apellido || "",
-        email: res.data.cliente.email || "",
-        telefono_movil: res.data.cliente.telefono_movil || "",
-        dni: res.data.cliente.dni || "",
-        empresa: res.data.cliente.empresa || "No",
-        nombre_empresa: res.data.cliente.nombre_empresa || "",
+      const token = sessionStorage.getItem("token");
+      console.log("🔑 Token usado en detalle cliente:", token);
+      const res = await axios.get(`http://localhost:4000/clientes/${id}/detalle`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      setVehiculos(res.data.vehiculos);
+      console.log("📦 Datos recibidos:", res.data);
+      setCliente(res.data);
+      setForm({
+        nombre: res.data.cliente?.nombre || "",
+        apellido: res.data.cliente?.apellido || "",
+        email: res.data.cliente?.email || "",
+        telefono_movil: res.data.cliente?.telefono_movil || "",
+        dni: res.data.cliente?.dni || "",
+        empresa: res.data.cliente?.empresa ? "Sí" : "No",
+        nombre_empresa: res.data.cliente?.nombre_empresa || "",
+      });
+      setVehiculos(res.data.vehiculos || []);
     } catch (error) {
-      console.error("Error al cargar datos del cliente", error);
+      console.error("❌ Error al cargar datos del cliente", error);
     }
   };
 

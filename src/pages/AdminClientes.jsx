@@ -23,16 +23,24 @@ export default function AdminClientes() {
 
   const cargarClientes = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/clientes-autos");
+      const token = sessionStorage.getItem("token");
+      const res = await axios.get("http://localhost:4000/clientes", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setClientes(res.data);
+      console.log("📦 Clientes cargados:", res.data);
     } catch (error) {
       console.error("Error al cargar clientes:", error);
     }
   };
+  
 
-  const clientesFiltrados = clientes.filter((c) =>
-    `${c.nombre} ${c.apellido}`.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const clientesFiltrados = clientes.filter((c) => {
+    const nombre = c.nombre_visible || "";
+    return nombre.toLowerCase().includes(busqueda.toLowerCase());
+  });
 
   const handleVolver = () => {
     navigate("/admin/dashboard");
@@ -68,7 +76,7 @@ export default function AdminClientes() {
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
-          placeholder="Buscar por nombre o apellido..."
+          placeholder="Buscar por nombre..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           className="border px-2 py-1 rounded w-full max-w-md"
@@ -87,36 +95,26 @@ export default function AdminClientes() {
             <th className="border px-2 py-1">Nombre</th>
             <th className="border px-2 py-1">Email</th>
             <th className="border px-2 py-1">Teléfono</th>
-            <th className="border px-2 py-1">Estado</th>
-            <th className="border px-2 py-1">Autos</th>
+            <th className="border px-2 py-1">Empresa</th>
             <th className="border px-2 py-1">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {clientesFiltrados.map((cliente) => (
             <tr key={cliente.id_cliente} className="hover:bg-gray-100">
-              <td className="border px-2 py-1">
-                {cliente.nombre} {cliente.apellido}
-              </td>
+              <td className="border px-2 py-1">{cliente.nombre_visible}</td>
               <td className="border px-2 py-1">{cliente.email}</td>
-              <td className="border px-2 py-1">{cliente.telefono_movil}</td>
-              <td className="border px-2 py-1">
-                {cliente.activo ? "Activo" : "Inactivo"}
-              </td>
-              <td className="border px-2 py-1">{cliente.cantidad_autos}</td>
+              <td className="border px-2 py-1">{cliente.telefono}</td>
+              <td className="border px-2 py-1">{cliente.nombre_empresa || "-"}</td>
               <td className="border px-2 py-1 space-x-2">
                 <button
-                  onClick={() =>
-                    navigate(`/admin/clientes/${cliente.id_cliente}/editar`)
-                  }
+                  onClick={() => navigate(`/admin/clientes/${cliente.id_cliente}/editar`)}
                   className="text-blue-600 hover:underline"
                 >
                   <Pencil size={16} />
                 </button>
                 <button
-                  onClick={() =>
-                    navigate(`/admin/clientes/${cliente.id_cliente}/editar`)
-                  }
+                  onClick={() => navigate(`/admin/clientes/${cliente.id_cliente}/editar`)}
                   className="text-green-600 hover:underline"
                 >
                   <Car size={16} />

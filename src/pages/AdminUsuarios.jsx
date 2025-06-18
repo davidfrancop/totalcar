@@ -12,6 +12,9 @@ export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [editando, setEditando] = useState(null);
   const [form, setForm] = useState({
+    nombre_usuario: "",
+    nombre: "",
+    apellido: "",
     rol: "",
     activo: true,
   });
@@ -45,6 +48,9 @@ export default function AdminUsuarios() {
   const handleEditar = (usuario) => {
     setEditando(usuario.id_usuario);
     setForm({
+      nombre_usuario: usuario.nombre_usuario,
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
       rol: usuario.rol,
       activo: usuario.activo,
     });
@@ -59,7 +65,13 @@ export default function AdminUsuarios() {
         },
       });
       setEditando(null);
-      setForm({ rol: "", activo: true });
+      setForm({
+        nombre_usuario: "",
+        nombre: "",
+        apellido: "",
+        rol: "",
+        activo: true,
+      });
       cargarUsuarios();
     } catch (error) {
       console.error("❌ Error al guardar usuario:", error);
@@ -97,7 +109,6 @@ export default function AdminUsuarios() {
 
   return (
     <div className="p-4 max-w-6xl mx-auto">
-      {/* Botón Atrás (solo admin) */}
       {rol === "admin" && (
         <button
           onClick={handleAtras}
@@ -107,16 +118,13 @@ export default function AdminUsuarios() {
         </button>
       )}
 
-      {/* Barra de botones */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2">
-          <button
-            onClick={handleNuevoUsuario}
-            className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
-          >
-            <UserPlus size={18} /> Nuevo Usuario
-          </button>
-        </div>
+        <button
+          onClick={handleNuevoUsuario}
+          className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+        >
+          <UserPlus size={18} /> Nuevo Usuario
+        </button>
         <button
           onClick={handleCerrarSesion}
           className="flex items-center gap-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition"
@@ -169,8 +177,28 @@ export default function AdminUsuarios() {
 
       {editando && (
         <div className="mt-6 border-t pt-4">
-          <h2 className="text-lg font-semibold mb-2">Editar Usuario #{editando}</h2>
+          <h2 className="text-lg font-semibold mb-2">Editar Usuario</h2>
           <div className="flex flex-col gap-3">
+            <input
+              className="border p-2 rounded"
+              placeholder="Nombre de usuario"
+              value={form.nombre_usuario}
+              onChange={(e) =>
+                setForm({ ...form, nombre_usuario: e.target.value })
+              }
+            />
+            <input
+              className="border p-2 rounded"
+              placeholder="Nombre"
+              value={form.nombre}
+              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+            />
+            <input
+              className="border p-2 rounded"
+              placeholder="Apellido"
+              value={form.apellido}
+              onChange={(e) => setForm({ ...form, apellido: e.target.value })}
+            />
             <select
               className="border p-2 rounded"
               value={form.rol}
