@@ -1,5 +1,6 @@
+// ========================
 // Archivo: src/pages/AdminUsuarios.jsx
-
+// ========================
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Pencil, Trash2, LogOut, ArrowLeft, UserPlus } from "lucide-react";
@@ -10,6 +11,7 @@ const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
+  const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState(null);
   const [form, setForm] = useState({
     nombre_usuario: "",
@@ -24,6 +26,7 @@ export default function AdminUsuarios() {
 
   useEffect(() => {
     if (!isAuthenticated()) {
+      logout();
       navigate("/login");
     } else {
       cargarUsuarios();
@@ -35,9 +38,7 @@ export default function AdminUsuarios() {
     try {
       const token = sessionStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/usuarios`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setUsuarios(res.data);
     } catch (error) {
@@ -60,18 +61,10 @@ export default function AdminUsuarios() {
     try {
       const token = sessionStorage.getItem("token");
       await axios.put(`${BASE_URL}/usuarios/${editando}`, form, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setEditando(null);
-      setForm({
-        nombre_usuario: "",
-        nombre: "",
-        apellido: "",
-        rol: "",
-        activo: true,
-      });
+      setForm({ nombre_usuario: "", nombre: "", apellido: "", rol: "", activo: true });
       cargarUsuarios();
     } catch (error) {
       console.error("❌ Error al guardar usuario:", error);
@@ -83,9 +76,7 @@ export default function AdminUsuarios() {
       try {
         const token = sessionStorage.getItem("token");
         await axios.delete(`${BASE_URL}/usuarios/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         cargarUsuarios();
       } catch (error) {
@@ -94,80 +85,89 @@ export default function AdminUsuarios() {
     }
   };
 
-  const handleNuevoUsuario = () => {
-    navigate("/admin/crear-usuario");
-  };
+  const handleNuevo = () => navigate("/admin/crear-usuario");
+  const handleVolver = () => navigate(rol === "admin" ? "/admin" : "/");
+  const handleLogout = () => logout();
 
-  const handleCerrarSesion = () => {
-    logout();
-    navigate("/login");
-  };
-
-  const handleAtras = () => {
-    navigate("/admin");
-  };
+  // Filtrar usuarios según búsqueda
+  const usuariosFiltrados = usuarios.filter(u => {
+    const term = busqueda.toLowerCase();
+    return (
+      u.nombre_usuario.toLowerCase().includes(term) ||
+      u.nombre.toLowerCase().includes(term) ||
+      u.apellido.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="p-4 max-w-6xl mx-auto">
-      {rol === "admin" && (
-        <button
-          onClick={handleAtras}
-          className="mb-4 flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
-        >
-          <ArrowLeft size={18} /> Volver al Panel
-        </button>
-      )}
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Gestión de Usuarios</h1>
+        <div className="flex gap-4">
+          {rol === "admin" && (
+            <button
+              onClick={handleVolver}
+              className="flex items-center gap-1 text-blue-600 hover:underline"
+            >
+              <ArrowLeft size={18} /> Volver
+            </button>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-red-600 hover:underline"
+          >
+            <LogOut size={18} /> Cerrar sesión
+          </button>
+        </div>
+      </div>
 
       <div className="flex justify-between items-center mb-6">
+        <input
+          type="text"
+          placeholder="Buscar usuarios..."
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          className="border px-2 py-1 rounded w-full max-w-md"
+        />
         <button
-          onClick={handleNuevoUsuario}
-          className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+          onClick={handleNuevo}
+          className="flex items-center gap-1 text-green-600 hover:underline"
         >
           <UserPlus size={18} /> Nuevo Usuario
         </button>
-        <button
-          onClick={handleCerrarSesion}
-          className="flex items-center gap-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition"
-        >
-          <LogOut size={18} /> Cerrar sesión
-        </button>
       </div>
 
-      <h1 className="text-2xl font-bold mb-4">Gestión de Usuarios</h1>
-
-      <table className="w-full border border-gray-300 rounded shadow text-sm">
-        <thead className="bg-gray-100">
+      <table className="w-full border-collapse border text-sm">
+        <thead className="bg-gray-200">
           <tr>
-            <th className="p-2 text-left">ID</th>
-            <th className="p-2 text-left">Usuario</th>
-            <th className="p-2 text-left">Nombre</th>
-            <th className="p-2 text-left">Apellido</th>
-            <th className="p-2 text-left">Rol</th>
-            <th className="p-2 text-left">Activo</th>
-            <th className="p-2 text-left">Acciones</th>
+            <th className="border px-2 py-1">Usuario</th>
+            <th className="border px-2 py-1">Nombre</th>
+            <th className="border px-2 py-1">Apellido</th>
+            <th className="border px-2 py-1">Rol</th>
+            <th className="border px-2 py-1">Activo</th>
+            <th className="border px-2 py-1">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {usuarios.map((usuario) => (
-            <tr key={usuario.id_usuario} className="border-t">
-              <td className="p-2">{usuario.id_usuario}</td>
-              <td className="p-2">{usuario.nombre_usuario}</td>
-              <td className="p-2">{usuario.nombre}</td>
-              <td className="p-2">{usuario.apellido}</td>
-              <td className="p-2">{usuario.rol}</td>
-              <td className="p-2">{usuario.activo ? "Sí" : "No"}</td>
-              <td className="p-2 flex gap-2">
+          {usuariosFiltrados.map((u) => (
+            <tr key={u.id_usuario} className="hover:bg-gray-100">
+              <td className="border px-2 py-1">{u.nombre_usuario}</td>
+              <td className="border px-2 py-1">{u.nombre}</td>
+              <td className="border px-2 py-1">{u.apellido}</td>
+              <td className="border px-2 py-1">{u.rol}</td>
+              <td className="border px-2 py-1">{u.activo ? "Sí" : "No"}</td>
+              <td className="border px-2 py-1 space-x-2">
                 <button
-                  className="text-blue-600 hover:text-blue-800"
-                  onClick={() => handleEditar(usuario)}
+                  onClick={() => handleEditar(u)}
+                  className="text-blue-600 hover:underline"
                 >
-                  <Pencil size={18} />
+                  <Pencil size={16} />
                 </button>
                 <button
-                  className="text-red-600 hover:text-red-800"
-                  onClick={() => handleEliminar(usuario.id_usuario)}
+                  onClick={() => handleEliminar(u.id_usuario)}
+                  className="text-red-600 hover:underline"
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={16} />
                 </button>
               </td>
             </tr>
@@ -183,9 +183,7 @@ export default function AdminUsuarios() {
               className="border p-2 rounded"
               placeholder="Nombre de usuario"
               value={form.nombre_usuario}
-              onChange={(e) =>
-                setForm({ ...form, nombre_usuario: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, nombre_usuario: e.target.value })}
             />
             <input
               className="border p-2 rounded"
@@ -210,26 +208,11 @@ export default function AdminUsuarios() {
               <option value="recepcion">Recepción</option>
             </select>
             <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.activo}
-                onChange={(e) => setForm({ ...form, activo: e.target.checked })}
-              />
-              Activo
+              <input type="checkbox" checked={form.activo} onChange={(e) => setForm({ ...form, activo: e.target.checked })} /> Activo
             </label>
             <div className="flex gap-2">
-              <button
-                onClick={handleGuardar}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                Guardar
-              </button>
-              <button
-                onClick={() => setEditando(null)}
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-              >
-                Cancelar
-              </button>
+              <button onClick={handleGuardar} className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Guardar</button>
+              <button onClick={() => setEditando(null)} className="bg-gray-300 text-gray-800 px-3 py-1 rounded hover:bg-gray-400">Cancelar</button>
             </div>
           </div>
         </div>

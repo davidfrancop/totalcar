@@ -1,8 +1,8 @@
+// ========================
 // Archivo: src/pages/AdminLogin.jsx
-
-import { useState, useEffect } from 'react';
+// ========================
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isAuthenticated, getRol } from '../utils/auth';
 
 export default function AdminLogin() {
   const [usuario, setUsuario] = useState('');
@@ -10,93 +10,80 @@ export default function AdminLogin() {
   const [mensaje, setMensaje] = useState('');
   const navigate = useNavigate();
 
-  // Redirección automática si ya está autenticado
-  useEffect(() => {
-    if (isAuthenticated()) {
-      const rol = getRol();
-      if (rol === 'admin') {
-        navigate('/admin', { replace: true });
-      } else if (rol === 'recepcion') {
-        navigate('/admin/clientes', { replace: true });
-      }
-    }
-    // eslint-disable-next-line
-  }, []);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje('');
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/login`, {
+      const res = await fetch('http://localhost:4000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ usuario, contrasena }),
       });
 
       const data = await res.json();
+      console.log("DATA DEL LOGIN:", data);
 
-      if (res.ok) {
-        const { token, rol } = data;
-        if (token && rol) {
-          sessionStorage.setItem('token', token);
-          sessionStorage.setItem('rol', rol);
-          sessionStorage.setItem('usuario', JSON.stringify(data));
+      if (!res.ok) {
+        setMensaje(data.error || 'Error al iniciar sesión');
+        return;
+      }
 
-          if (rol === 'admin') {
-            navigate('/admin', { replace: true });
-          } else if (rol === 'recepcion') {
-            navigate('/admin/clientes', { replace: true });
-          } else {
-            setMensaje('Rol no autorizado.');
-          }
-        } else {
-          setMensaje('Respuesta inválida del servidor.');
-        }
+      // Guardar token y rol
+      sessionStorage.setItem('token', data.token);
+      sessionStorage.setItem('rol', data.rol);
+
+      // Redirigir según el rol
+      if (data.rol === 'admin') {
+        navigate('/admin');
+      } else if (data.rol === 'recepcion') {
+        navigate('/admin/clientes');
       } else {
-        setMensaje(data?.error || 'Credenciales inválidas');
+        navigate('/');
       }
     } catch (error) {
-      setMensaje('Error de conexión con el servidor');
-      console.error('Error de red:', error);
+      console.error('Error en login:', error);
+      setMensaje('Error al conectar con el servidor');
     }
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen px-4 py-10">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md mx-auto mt-20">
-        <h1 className="text-2xl font-bold mb-6 text-center">Acceso Administrativo</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            name="usuario"
-            value={usuario}
-            onChange={(e) => setUsuario(e.target.value)}
-            placeholder="Usuario"
-            className="w-full border border-gray-300 p-2 rounded"
-            autoFocus
-            required
-          />
-          <input
-            type="password"
-            name="contrasena"
-            value={contrasena}
-            onChange={(e) => setContrasena(e.target.value)}
-            placeholder="Contraseña"
-            className="w-full border border-gray-300 p-2 rounded"
-            required
-          />
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-          >
-            Iniciar sesión
-          </button>
-        </form>
+    <div className="flex items-start justify-center h-screen bg-gray-100 pt-20">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-md rounded p-6 w-full max-w-sm"
+      >
+        <h2 className="text-2xl font-bold mb-4 text-center">Login Admin</h2>
+
         {mensaje && (
-          <div className="mt-4 text-center text-red-600 font-semibold">{mensaje}</div>
+          <p className="text-red-600 text-sm text-center mb-4">{mensaje}</p>
         )}
-      </div>
+
+        <label className="block mb-2 text-sm font-semibold">Usuario</label>
+        <input
+          type="text"
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          className="w-full px-3 py-2 mb-4 border rounded"
+          required
+        />
+
+        <label className="block mb-2 text-sm font-semibold">Contraseña</label>
+        <input
+          type="password"
+          value={contrasena}
+          onChange={(e) => setContrasena(e.target.value)}
+          className="w-full px-3 py-2 mb-4 border rounded"
+          required
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+        >
+          Iniciar sesión
+        </button>
+      </form>
     </div>
   );
 }

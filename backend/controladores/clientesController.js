@@ -1,111 +1,144 @@
 // ========================
 // Archivo: backend/controladores/clientesController.js
 // ========================
-const pool = require("../db/pool");
+const { pool } = require('../db/pool');
 
-async function registrarCliente(req, res) {
+// Listar todos los clientes
+const listarClientes = async (req, res) => {
+  try {
+    const resultado = await pool.query('SELECT * FROM clientes ORDER BY id_cliente DESC');
+    res.json(resultado.rows);
+  } catch (error) {
+    console.error('Error al listar clientes:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+// Obtener cliente por ID simple
+const obtenerCliente = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const resultado = await pool.query('SELECT id_cliente, nombre, apellido FROM clientes WHERE id_cliente = $1', [id]);
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error('Error al obtener cliente:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+// Obtener cliente con detalle completo
+const obtenerClienteDetalle = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const resultado = await pool.query('SELECT * FROM clientes WHERE id_cliente = $1', [id]);
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error('Error al obtener detalle del cliente:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+// Crear cliente
+const crearCliente = async (req, res) => {
   const {
-    tipo, nombre, apellido, dni, email, telefono,
-    nombre_empresa, id_fiscal, persona_contacto,
-    email_contacto, telefono_contacto, direccion,
-    ciudad, pais
+    nombre, apellido, dni, ciudad, pais, email,
+    telefono_oficina, telefono_casa, telefono_movil,
+    fecha_nacimiento, notas, empresa, nombre_empresa,
+    estado, calle, nro_casa, codigo_postal, id_empresa, tipo
   } = req.body;
 
   try {
-    if (tipo === "particular") {
-      await pool.query(
-        `INSERT INTO clientes (tipo, nombre, apellido, dni, email, telefono_movil)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [tipo, nombre, apellido, dni, email, telefono]
-      );
-    } else if (tipo === "empresa") {
-      let empresaId;
-      const buscar = await pool.query(
-        "SELECT id_empresa FROM empresas WHERE id_fiscal = $1",
-        [id_fiscal]
-      );
-      if (buscar.rows.length) {
-        empresaId = buscar.rows[0].id_empresa;
-      } else {
-        const nueva = await pool.query(
-          `INSERT INTO empresas (nombre_empresa, id_fiscal, persona_contacto, email_contacto, telefono_contacto, direccion, ciudad, pais)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id_empresa`,
-          [
-            nombre_empresa,
-            id_fiscal,
-            persona_contacto,
-            email_contacto,
-            telefono_contacto,
-            direccion,
-            ciudad,
-            pais,
-          ]
-        );
-        empresaId = nueva.rows[0].id_empresa;
-      }
-      await pool.query(
-        `INSERT INTO clientes (tipo, id_empresa, email, telefono_movil)
-         VALUES ($1, $2, $3, $4)`,
-        ["empresa", empresaId, email_contacto, telefono_contacto]
-      );
-    } else {
-      return res.status(400).json({ error: "Tipo de cliente inválido" });
+    const resultado = await pool.query(
+      `INSERT INTO clientes (
+        nombre, apellido, dni, ciudad, pais, email,
+        telefono_oficina, telefono_casa, telefono_movil,
+        fecha_nacimiento, notas, empresa, nombre_empresa,
+        estado, fecha_alta, calle, nro_casa, codigo_postal, id_empresa, tipo
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6,
+        $7, $8, $9, $10, $11, $12, $13,
+        $14, CURRENT_DATE, $15, $16, $17, $18, $19
+      ) RETURNING *`,
+      [
+        nombre, apellido, dni, ciudad, pais, email,
+        telefono_oficina, telefono_casa, telefono_movil,
+        fecha_nacimiento, notas, empresa, nombre_empresa,
+        estado, calle, nro_casa, codigo_postal, id_empresa, tipo
+      ]
+    );
+
+    res.status(201).json(resultado.rows[0]);
+  } catch (error) {
+    console.error('Error al crear cliente:', error);
+    res.status(500).json({ error: 'Error al crear cliente' });
+  }
+};
+
+// Actualizar cliente
+const actualizarCliente = async (req, res) => {
+  const id = req.params.id;
+  const {
+    nombre, apellido, dni, ciudad, pais, email,
+    telefono_oficina, telefono_casa, telefono_movil,
+    fecha_nacimiento, notas, empresa, nombre_empresa,
+    estado, calle, nro_casa, codigo_postal, id_empresa, tipo
+  } = req.body;
+
+  try {
+    const resultado = await pool.query(
+      `UPDATE clientes SET
+        nombre = $1, apellido = $2, dni = $3, ciudad = $4,
+        pais = $5, email = $6, telefono_oficina = $7,
+        telefono_casa = $8, telefono_movil = $9,
+        fecha_nacimiento = $10, notas = $11, empresa = $12,
+        nombre_empresa = $13, estado = $14, calle = $15,
+        nro_casa = $16, codigo_postal = $17, id_empresa = $18, tipo = $19
+      WHERE id_cliente = $20 RETURNING *`,
+      [
+        nombre, apellido, dni, ciudad, pais, email,
+        telefono_oficina, telefono_casa, telefono_movil,
+        fecha_nacimiento, notas, empresa, nombre_empresa,
+        estado, calle, nro_casa, codigo_postal, id_empresa, tipo, id
+      ]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
     }
-    res.json({ mensaje: "Cliente registrado correctamente" });
-  } catch (error) {
-    console.error("❌ Error al registrar cliente:", error);
-    res.status(500).json({ error: "Error en el servidor" });
-  }
-}
 
-async function obtenerClientes(req, res) {
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error('Error al actualizar cliente:', error);
+    res.status(500).json({ error: 'Error al actualizar cliente' });
+  }
+};
+
+// Eliminar cliente
+const eliminarCliente = async (req, res) => {
+  const id = req.params.id;
   try {
-    const resultado = await pool.query(`
-      SELECT
-        c.id_cliente, c.tipo, c.nombre, c.apellido, c.dni, c.email,
-        COALESCE(c.telefono_movil,c.telefono_oficina,c.telefono_casa) AS telefono,
-        c.id_empresa, e.nombre_empresa,
-        COALESCE(c.nombre,e.nombre_empresa) AS nombre_visible
-      FROM clientes c
-      LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
-      ORDER BY c.id_cliente DESC
-    `);
-    res.json(resultado.rows);
+    const resultado = await pool.query('DELETE FROM clientes WHERE id_cliente = $1 RETURNING *', [id]);
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+    res.json({ mensaje: 'Cliente eliminado' });
   } catch (error) {
-    console.error("❌ Error al obtener clientes:", error);
-    res.status(500).json({ error: "Error en el servidor" });
+    console.error('Error al eliminar cliente:', error);
+    res.status(500).json({ error: 'Error al eliminar cliente' });
   }
-}
-
-async function obtenerDetalleCliente(req, res) {
-  const { id } = req.params;
-  try {
-    const cliente = await pool.query(
-      `SELECT c.*, e.nombre_empresa,
-              COALESCE(c.nombre,e.nombre_empresa) AS nombre_visible
-       FROM clientes c
-       LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
-       WHERE c.id_cliente = $1`,
-      [id]
-    );
-    if (!cliente.rows.length)
-      return res.status(404).json({ error: "Cliente no encontrado" });
-
-    const vehiculos = await pool.query(
-      `SELECT * FROM vehiculos WHERE id_cliente = $1
-       ORDER BY id_vehiculo DESC`,
-      [id]
-    );
-
-    res.json({ cliente: cliente.rows[0], vehiculos: vehiculos.rows });
-  } catch (error) {
-    console.error("❌ Error al obtener detalle del cliente:", error);
-    res.status(500).json({ error: "Error en el servidor" });
-  }
-}
+};
 
 module.exports = {
-  registrarCliente,
-  obtenerClientes,
-  obtenerDetalleCliente
+  listarClientes,
+  obtenerCliente,
+  obtenerClienteDetalle,
+  crearCliente,
+  actualizarCliente,
+  eliminarCliente
 };

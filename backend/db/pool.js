@@ -2,13 +2,14 @@
 // Archivo: backend/db/pool.js
 // ========================
 const { Pool } = require("pg");
+require("dotenv").config();
 
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "totalcar",
-  password: "16Ignacio#",
-  port: 5432,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
 });
 
-module.exports = pool;
+module.exports = { pool };

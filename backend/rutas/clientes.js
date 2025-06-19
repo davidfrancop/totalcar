@@ -1,32 +1,57 @@
 // ========================
 // Archivo: backend/rutas/clientes.js
 // ========================
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const jwt = require("jsonwebtoken");
-const {
-  registrarCliente,
-  obtenerClientes,
-  obtenerDetalleCliente
-} = require("../controladores/clientesController");
+const clientesController = require('../controladores/clientesController');
+const { verifyToken, verifyRole } = require('../middlewares/auth');
 
-// Middleware de autenticación
-function verificarToken(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Token no proporcionado" });
-  }
-  try {
-    const token = auth.split(" ")[1];
-    jwt.verify(token, "secreto");
-    next();
-  } catch (error) {
-    return res.status(403).json({ error: "Token inválido" });
-  }
-}
+// Listar todos los clientes (roles admin y recepción)
+router.get(
+  '/',
+  verifyToken,
+  verifyRole('admin', 'recepcion'),
+  clientesController.listarClientes
+);
 
-router.post("/", registrarCliente);
-router.get("/", verificarToken, obtenerClientes);
-router.get("/:id/detalle", verificarToken, obtenerDetalleCliente);
+// Obtener cliente con más detalle (para vista de edición)
+router.get(
+  '/:id/detalle',
+  verifyToken,
+  verifyRole('admin', 'recepcion'),
+  clientesController.obtenerClienteDetalle
+);
+
+// Obtener detalle simple
+router.get(
+  '/:id',
+  verifyToken,
+  verifyRole('admin', 'recepcion'),
+  clientesController.obtenerCliente
+);
+
+// Crear nuevo cliente (solo admin)
+router.post(
+  '/',
+  verifyToken,
+  verifyRole('admin'),
+  clientesController.crearCliente
+);
+
+// Actualizar cliente existente (solo admin)
+router.put(
+  '/:id',
+  verifyToken,
+  verifyRole('admin'),
+  clientesController.actualizarCliente
+);
+
+// Eliminar cliente (solo admin)
+router.delete(
+  '/:id',
+  verifyToken,
+  verifyRole('admin'),
+  clientesController.eliminarCliente
+);
 
 module.exports = router;

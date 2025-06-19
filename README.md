@@ -27,7 +27,11 @@ total-car/
 ├── backend/                  # 🔧 Servidor Express + PostgreSQL
 │   ├── index.js              # Punto de entrada del backend (Express)
 │   ├── db/
+│   │   ├── pool.js
 │   │   └── setup.js          # Script opcional para crear las tablas (por código)
+│   │
+│   ├── middlewares/
+│   │   └── auth.js
 │   │
 │   ├── rutas/
 │   │   ├── clientes.js       # Endpoints: GET, POST, PUT de clientes
@@ -98,7 +102,6 @@ total-car/
     │   ├── EditarClienteVehiculos.jsx
     │   └── VehiculoDetalle.jsx
     │
-    ├── utils/                # Funciones auxiliares
-    │   └── auth.js           # Validación de token, roles, logout
-    │
-    └── data/ (opcional)      # Datos estáticos, mocks o listas locales
+    └── utils/
+        └── auth.js
+
