@@ -1,10 +1,12 @@
+// ========================
 // Archivo: src/pages/AdminVehiculos.jsx
+// ========================
 
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { isAuthenticated, getRol, logout } from "../utils/auth";
-import { LogOut, ArrowLeft } from "lucide-react";
+import { isAuthenticated, getRol, logout, getToken } from "../utils/auth";
+import { LogOut, ArrowLeft, Eye } from "lucide-react";
 
 export default function AdminVehiculos() {
   const [vehiculos, setVehiculos] = useState([]);
@@ -20,8 +22,12 @@ export default function AdminVehiculos() {
 
   const cargarVehiculos = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/vehiculos");
+      const token = getToken();
+      const res = await axios.get("/vehiculos", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setVehiculos(res.data);
+      console.log("🚗 Vehículos cargados:", res.data);
     } catch (error) {
       console.error("Error al cargar vehículos:", error);
     }
@@ -43,7 +49,7 @@ export default function AdminVehiculos() {
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Listado de Vehículos</h1>
+        <h1 className="text-2xl font-bold">Gestión de Vehículos</h1>
         <div className="flex gap-4">
           <button
             onClick={handleVolver}
@@ -86,13 +92,13 @@ export default function AdminVehiculos() {
               <td className="border px-2 py-1">{v.marca}</td>
               <td className="border px-2 py-1">{v.modelo}</td>
               <td className="border px-2 py-1">{v.anio || "-"}</td>
-              <td className="border px-2 py-1">{v.nombre_cliente}</td>
+              <td className="border px-2 py-1">{v.nombre_cliente || "-"}</td>
               <td className="border px-2 py-1">
                 <button
                   onClick={() => navigate(`/vehiculos/${v.id_vehiculo}`)}
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline flex items-center gap-1"
                 >
-                  Ver ficha
+                  <Eye size={16} /> Ver ficha
                 </button>
               </td>
             </tr>

@@ -1,5 +1,6 @@
+// ========================
 // Archivo: src/App.jsx
-
+// ========================
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -21,6 +22,8 @@ import CrearUsuario from './pages/CrearUsuario';
 import CrearCliente from './pages/CrearCliente';
 import EditarClienteVehiculos from './pages/EditarClienteVehiculos';
 import VehiculoDetalle from './pages/VehiculoDetalle';
+import CrearVehiculo from './pages/CrearVehiculo';
+
 
 // Componente de protección de rutas
 import RutaProtegida from './components/RutaProtegida';
@@ -107,6 +110,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/clientes/:id/vehiculo-nuevo"
+            element={
+              <RutaProtegida rolPermitido="recepcion">
+                <CrearVehiculo />
+              </RutaProtegida>
+            }
+          />
+          <Route
             path="/admin/vehiculos"
             element={
               <RutaProtegida rolPermitido="recepcion">
@@ -115,9 +126,17 @@ export default function App() {
             }
           />
 
-          {/* Ver ficha de vehículo */}
+          {/* Ver ficha de vehículo (ambas variantes) */}
           <Route
             path="/vehiculos/:id"
+            element={
+              <RutaProtegida>
+                <VehiculoDetalle />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/vehiculo/:id"
             element={
               <RutaProtegida>
                 <VehiculoDetalle />

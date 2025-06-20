@@ -1,5 +1,6 @@
+// ========================
 // Archivo: src/pages/AdminDashboard.jsx
-
+// ========================
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated, getRol, logout } from "../utils/auth";
@@ -9,6 +10,8 @@ import {
   ClipboardList,
   Wrench,
   LogOut,
+  FilePlus,
+  CalendarClock
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -16,38 +19,80 @@ export default function AdminDashboard() {
   const rol = getRol();
 
   useEffect(() => {
-    if (!isAuthenticated() || rol !== "admin") {
+    if (!isAuthenticated()) {
       navigate("/login");
     }
-  }, [navigate, rol]);
+  }, [navigate]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const opciones = [
-    {
-      titulo: "Clientes y Vehículos",
-      icono: <Car className="w-6 h-6 text-gray-700" />,
-      onClick: () => navigate("/admin/clientes"),
-    },
-    {
-      titulo: "Usuarios",
-      icono: <Users className="w-6 h-6 text-gray-700" />,
-      onClick: () => navigate("/admin/usuarios"),
-    },
-    {
-      titulo: "Historial de Servicios",
-      icono: <ClipboardList className="w-6 h-6 text-gray-700" />,
-      onClick: () => navigate("/admin/servicios"),
-    },
-    {
-      titulo: "Tareas del Taller",
-      icono: <Wrench className="w-6 h-6 text-gray-700" />,
-      onClick: () => navigate("/admin/taller"),
-    },
-  ];
+  let opcionesBase = [];
+
+  if (rol === "admin") {
+    opcionesBase = [
+      {
+        titulo: "Clientes",
+        icono: <Users className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/clientes"),
+      },
+      {
+        titulo: "Vehículos",
+        icono: <Car className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/vehiculos"),
+      },
+      {
+        titulo: "Órdenes de Trabajo",
+        icono: <FilePlus className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/ordenes"),
+      },
+      {
+        titulo: "Historial de Servicios",
+        icono: <ClipboardList className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/servicios"),
+      },
+      {
+        titulo: "Citas",
+        icono: <CalendarClock className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/citas"),
+      },
+      {
+        titulo: "Usuarios",
+        icono: <Wrench className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/usuarios"),
+      },
+    ];
+  } else if (rol === "recepcion") {
+    opcionesBase = [
+      {
+        titulo: "Clientes",
+        icono: <Users className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/clientes"),
+      },
+      {
+        titulo: "Vehículos",
+        icono: <Car className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/vehiculos"),
+      },
+      {
+        titulo: "Órdenes de Trabajo",
+        icono: <FilePlus className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/ordenes"),
+      },
+      {
+        titulo: "Historial de Servicios",
+        icono: <ClipboardList className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/servicios"),
+      },
+      {
+        titulo: "Citas",
+        icono: <CalendarClock className="w-6 h-6 text-gray-700" />,
+        onClick: () => navigate("/admin/citas"),
+      },
+    ];
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
@@ -58,7 +103,7 @@ export default function AdminDashboard() {
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {opciones.map((opcion, i) => (
+          {opcionesBase.map((opcion, i) => (
             <div
               key={i}
               onClick={opcion.onClick}

@@ -1,4 +1,6 @@
+// ========================
 // Archivo: src/pages/AdminClientes.jsx
+// ========================
 
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -101,7 +103,7 @@ export default function AdminClientes() {
                 <td className="border px-2 py-1">{cliente.email}</td>
                 <td className="border px-2 py-1">{cliente.telefono_movil}</td>
                 <td className="border px-2 py-1">
-                  {cliente.empresa?.nombre_empresa || "-"}
+                  {cliente.empresa ? cliente.nombre_empresa || "-" : "-"}
                 </td>
                 <td className="border px-2 py-1 space-x-2">
                   <button
@@ -114,9 +116,7 @@ export default function AdminClientes() {
                   </button>
                   <button
                     onClick={() =>
-                      navigate(
-                        `/admin/clientes/${cliente.id_cliente}/vehiculos`
-                      )
+                      navigate(`/admin/clientes/${cliente.id_cliente}/editar`)
                     }
                     className="text-green-600 hover:underline"
                   >

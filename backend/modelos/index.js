@@ -1,15 +1,12 @@
+// ========================
 // Archivo: backend/modelos/index.js
+// ========================
+const fs = require("fs");
+const path = require("path");
+const Sequelize = require("sequelize");
+const dotenv = require("dotenv");
 
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import { Sequelize } from 'sequelize'
-import dotenv from 'dotenv'
-
-dotenv.config()
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+dotenv.config();
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -18,64 +15,64 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
-    dialect: 'postgres',
+    dialect: "postgres",
     logging: false,
   }
-)
+);
 
-const db = {}
+const db = {};
+const basename = path.basename(__filename);
 
-// Cargar todos los modelos excepto este archivo
-const files = fs.readdirSync(__dirname).filter(
-  (file) => file.endsWith('.js') && file !== 'index.js'
-)
+fs.readdirSync(__dirname)
+  .filter(file => file.endsWith(".js") && file !== basename)
+  .forEach(file => {
+    const defineModel = require(path.join(__dirname, file));
+    const model = defineModel(sequelize, Sequelize.DataTypes);
+    db[model.name] = model;
+  });
 
-for (const file of files) {
-  const modelModule = await import(`./${file}`)
-  const defineModel = modelModule.default
-  const model = defineModel(sequelize, Sequelize.DataTypes)
-  db[model.name] = model
-}
-
-// RELACIONES - AJUSTA según tus claves foráneas reales
+// RELACIONES ENTRE MODELOS
 if (db.clientes && db.vehiculos) {
-  db.clientes.hasMany(db.vehiculos, { foreignKey: 'id_cliente' })
-  db.vehiculos.belongsTo(db.clientes, { foreignKey: 'id_cliente' })
+  db.clientes.hasMany(db.vehiculos, { foreignKey: 'id_cliente' });
+  db.vehiculos.belongsTo(db.clientes, { foreignKey: 'id_cliente' });
 }
 
 if (db.clientes && db.facturas) {
-  db.clientes.hasMany(db.facturas, { foreignKey: 'id_cliente' })
-  db.facturas.belongsTo(db.clientes, { foreignKey: 'id_cliente' })
+  db.clientes.hasMany(db.facturas, { foreignKey: 'id_cliente' });
+  db.facturas.belongsTo(db.clientes, { foreignKey: 'id_cliente' });
 }
 
 if (db.facturas && db.factura_detalles) {
-  db.facturas.hasMany(db.factura_detalles, { foreignKey: 'id_factura' })
-  db.factura_detalles.belongsTo(db.facturas, { foreignKey: 'id_factura' })
+  db.facturas.hasMany(db.factura_detalles, { foreignKey: 'id_factura' });
+  db.factura_detalles.belongsTo(db.facturas, { foreignKey: 'id_factura' });
 }
 
 if (db.ordenes_trabajo && db.historial_servicios) {
-  db.ordenes_trabajo.hasMany(db.historial_servicios, { foreignKey: 'id_orden' })
-  db.historial_servicios.belongsTo(db.ordenes_trabajo, { foreignKey: 'id_orden' })
+  db.ordenes_trabajo.hasMany(db.historial_servicios, { foreignKey: 'id_orden' });
+  db.historial_servicios.belongsTo(db.ordenes_trabajo, { foreignKey: 'id_orden' });
 }
 
 if (db.empresas && db.clientes) {
-  db.empresas.hasMany(db.clientes, { foreignKey: 'id_empresa' })
-  db.clientes.belongsTo(db.empresas, { foreignKey: 'id_empresa' })
+  db.empresas.hasMany(db.clientes, { foreignKey: 'id_empresa' });
+  db.clientes.belongsTo(db.empresas, {
+    foreignKey: 'id_empresa',
+    as: 'empresa_asociada' // ❌ evita colisión con campo "empresa"
+  });
 }
 
 if (db.citas && db.clientes) {
-  db.citas.belongsTo(db.clientes, { foreignKey: 'id_cliente' })
+  db.citas.belongsTo(db.clientes, { foreignKey: 'id_cliente' });
 }
 
 if (db.citas && db.vehiculos) {
-  db.citas.belongsTo(db.vehiculos, { foreignKey: 'id_vehiculo' })
+  db.citas.belongsTo(db.vehiculos, { foreignKey: 'id_vehiculo' });
 }
 
 if (db.citas && db.empleados) {
-  db.citas.belongsTo(db.empleados, { foreignKey: 'id_empleado' })
+  db.citas.belongsTo(db.empleados, { foreignKey: 'id_empleado' });
 }
 
-db.sequelize = sequelize
-db.Sequelize = Sequelize
+db.sequelize = sequelize;
+db.Sequelize = Sequelize;
 
-export default db
+module.exports = db;

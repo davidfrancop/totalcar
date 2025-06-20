@@ -1,11 +1,12 @@
 // ========================
 // Archivo: src/pages/EditarClienteVehiculos.jsx
 // ========================
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft, Pencil, Trash2, Plus } from "lucide-react";
-import { isAuthenticated, getRol, logout } from "../utils/auth";
+import { isAuthenticated, getRol, logout, getToken } from "../utils/auth";
 
 export default function EditarClienteVehiculos() {
   const { id } = useParams();
@@ -23,11 +24,9 @@ export default function EditarClienteVehiculos() {
 
   const cargarDetalle = async () => {
     try {
-      const token = sessionStorage.getItem("token");
+      const token = getToken();
       const res = await axios.get(`http://localhost:4000/clientes/${id}/detalle`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setCliente(res.data);
       cargarVehiculos(id);
@@ -41,7 +40,7 @@ export default function EditarClienteVehiculos() {
 
   const cargarVehiculos = async (idCliente) => {
     try {
-      const token = sessionStorage.getItem("token");
+      const token = getToken();
       const res = await axios.get(`http://localhost:4000/vehiculos/cliente/${idCliente}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -71,10 +70,10 @@ export default function EditarClienteVehiculos() {
         <div className="bg-white p-4 rounded shadow mb-6">
           <p><strong>Nombre:</strong> {cliente.nombre} {cliente.apellido}</p>
           <p><strong>DNI:</strong> {cliente.dni}</p>
-          <p><strong>Email:</strong> {cliente.email}</p>
-          <p><strong>Teléfono:</strong> {cliente.telefono_movil}</p>
+          <p><strong>Email:</strong> {cliente.email || "-"}</p>
+          <p><strong>Teléfono:</strong> {cliente.telefono_movil || "-"}</p>
           {cliente.empresa && (
-            <p><strong>Empresa:</strong> {cliente.nombre_empresa}</p>
+            <p><strong>Empresa:</strong> {cliente.nombre_empresa || "-"}</p>
           )}
         </div>
       )}
@@ -91,7 +90,7 @@ export default function EditarClienteVehiculos() {
             <div className="flex space-x-2">
               <button
                 className="text-blue-600 hover:text-blue-800"
-                onClick={() => navigate(`/vehiculo/${vehiculo.id_vehiculo}/editar`)}
+                onClick={() => navigate(`/vehiculos/${vehiculo.id_vehiculo}`)}
               >
                 <Pencil size={18} />
               </button>
@@ -108,7 +107,7 @@ export default function EditarClienteVehiculos() {
 
       <button
         className="mt-4 inline-flex items-center px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        onClick={() => navigate(`/crear-vehiculo/${id}`)}
+        onClick={() => navigate(`/admin/clientes/${id}/vehiculo-nuevo`)}
       >
         <Plus className="mr-1" size={16} />
         Agregar Vehículo

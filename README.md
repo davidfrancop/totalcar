@@ -36,6 +36,7 @@ total-car/
 │   ├── rutas/
 │   │   ├── clientes.js       # Endpoints: GET, POST, PUT de clientes
 │   │   ├── vehiculos.js      # Endpoints de vehículos
+│   │   ├── ordenes.js        # Endpoints de ordenes
 │   │   ├── login.js          # Login con verificación de contraseña
 │   │   └── usuarios.js       # Crear/editar usuarios (admin)
 │   │
@@ -98,8 +99,11 @@ total-car/
     │   ├── AdminUsuarios.jsx
     │   ├── AdminVehiculos.jsx
     │   ├── CrearCliente.jsx
+    │   ├── CrearOrdenTrabajo.jsx    
     │   ├── CrearUsuario.jsx
+    │   ├── CrearVehiculo.jsx
     │   ├── EditarClienteVehiculos.jsx
+    │   ├── AdminOrdenes.jsx
     │   └── VehiculoDetalle.jsx
     │
     └── utils/

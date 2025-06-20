@@ -2,39 +2,46 @@
 // Archivo: backend/rutas/vehiculos.js
 // ========================
 const express = require("express");
-const jwt = require("jsonwebtoken");
-const pool = require("../db/pool");
-
 const router = express.Router();
+const db = require("../modelos");
 
-// Middleware de autenticación
-router.use((req, res, next) => {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith("Bearer "))
-    return res.status(401).json({ error: "Token no proporcionado" });
+console.log("🧩 db.vehiculos:", db.vehiculos?.name || "❌ NO DEFINIDO");
+
+// Obtener todos los vehículos
+router.get("/", async (req, res) => {
   try {
-    const token = auth.split(" ")[1];
-    jwt.verify(token, process.env.JWT_SECRET || "secreto");
-    next();
-  } catch {
-    return res.status(401).json({ error: "Token inválido" });
+    const vehiculos = await db.vehiculos.findAll();
+    res.json(vehiculos);
+  } catch (error) {
+    console.error("❌ Error al obtener vehículos:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// ---------------------- OBTENER DETALLE VEHÍCULO ----------------------
-router.get("/:id", async (req, res) => {
-  const { id } = req.params;
+// Obtener vehículos por cliente
+router.get("/cliente/:id_cliente", async (req, res) => {
   try {
-    const resultado = await pool.query(
-      "SELECT * FROM vehiculos WHERE id_vehiculo = $1",
-      [id]
-    );
-    if (!resultado.rows.length)
-      return res.status(404).json({ error: "Vehículo no encontrado" });
-    res.json(resultado.rows[0]);
+    const vehiculos = await db.vehiculos.findAll({
+      where: { id_cliente: req.params.id_cliente },
+    });
+    res.json(vehiculos);
   } catch (error) {
-    console.error("? Error al obtener vehículo:", error);
-    res.status(500).json({ error: "Error en el servidor" });
+    console.error("❌ Error al obtener vehículos por cliente:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener un solo vehículo por ID
+router.get("/:id_vehiculo", async (req, res) => {
+  try {
+    const vehiculo = await db.vehiculos.findByPk(req.params.id_vehiculo);
+    if (!vehiculo) {
+      return res.status(404).json({ error: "Vehículo no encontrado" });
+    }
+    res.json(vehiculo);
+  } catch (error) {
+    console.error("❌ Error al obtener el vehículo:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 

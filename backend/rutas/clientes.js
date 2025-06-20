@@ -1,6 +1,7 @@
 // ========================
 // Archivo: backend/rutas/clientes.js
 // ========================
+
 const express = require('express');
 const router = express.Router();
 const clientesController = require('../controladores/clientesController');
@@ -22,7 +23,7 @@ router.get(
   clientesController.obtenerClienteDetalle
 );
 
-// Obtener detalle simple
+// Obtener detalle simple (por ID)
 router.get(
   '/:id',
   verifyToken,

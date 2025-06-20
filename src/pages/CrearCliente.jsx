@@ -1,4 +1,6 @@
+// ========================
 // Archivo: src/pages/CrearCliente.jsx
+// ========================
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +35,7 @@ export default function CrearCliente() {
       await axios.post(`${BASE_URL}/clientes`, {
         ...form,
         tipo,
+        empresa: tipo === "empresa",
       });
       navigate("/admin/clientes");
     } catch (error) {
