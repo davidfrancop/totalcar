@@ -8,6 +8,8 @@ import { Pencil, Car, LogOut, UserPlus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated, getRol, logout, getToken } from "../utils/auth";
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
 export default function AdminClientes() {
   const [clientes, setClientes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
@@ -20,13 +22,12 @@ export default function AdminClientes() {
       return;
     }
     cargarClientes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cargarClientes = async () => {
     try {
       const token = getToken();
-      const res = await axios.get("/clientes", {
+      const res = await axios.get(`${BASE_URL}/clientes`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setClientes(res.data);

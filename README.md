@@ -19,13 +19,19 @@ total-car/
 ├── .gitignore                # Archivos que Git no debe subir
 ├── index.html                # HTML principal de Vite
 ├── package.json              # Configuración y scripts del frontend
+├── postcss.config.js
 ├── postcss.config.js         # Configuración PostCSS para Tailwind
 ├── tailwind.config.js        # Configuración Tailwind CSS
 ├── vite.config.js            # Configuración de Vite
+├── eslint.config.js
+├── hash.cjs
 ├── README.md                 # Documentación del proyecto
 │
 ├── backend/                  # 🔧 Servidor Express + PostgreSQL
 │   ├── index.js              # Punto de entrada del backend (Express)
+│   ├── app.js
+│   ├── .env
+│   │
 │   ├── db/
 │   │   ├── pool.js
 │   │   └── setup.js          # Script opcional para crear las tablas (por código)
@@ -60,6 +66,7 @@ total-car/
 │   │    └── loginController.js        → función para login y generar token
 │   │
 │   ├── package.json          # Configuración del backend (bcrypt, pg, etc.)
+│   ├── package-lock.json
 │   └── node_modules/
 │
 ├── public/                   # 🌍 Recursos públicos
@@ -107,5 +114,6 @@ total-car/
     │   └── VehiculoDetalle.jsx
     │
     └── utils/
+    │   ├── vehiculoApi.js
         └── auth.js
 
